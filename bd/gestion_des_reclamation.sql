@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 04, 2025 at 04:51 PM
+-- Generation Time: Mar 11, 2025 at 05:04 AM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -23,26 +23,17 @@ SET time_zone = "+00:00";
 -- --------------------------------------------------------
 
 --
--- Table structure for table `administration`
---
-
-CREATE TABLE IF NOT EXISTS `administration` (
-  `email` varchar(50) NOT NULL DEFAULT '',
-  `mot_de_passe` varchar(50) NOT NULL,
-  PRIMARY KEY (`email`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
--- --------------------------------------------------------
-
---
 -- Table structure for table `etudiant`
 --
 
 CREATE TABLE IF NOT EXISTS `etudiant` (
   `matricule_etd` int(11) NOT NULL DEFAULT '0',
-  `nom_etd` varchar(50) NOT NULL,
-  `prénom_etd` varchar(50) NOT NULL,
-  PRIMARY KEY (`matricule_etd`)
+  `Email` varchar(50) NOT NULL,
+  `Departement` varchar(50) NOT NULL,
+  `Licence` varchar(50) NOT NULL,
+  `Semestre` varchar(50) NOT NULL,
+  PRIMARY KEY (`matricule_etd`),
+  UNIQUE KEY `Email` (`Email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 -- --------------------------------------------------------
@@ -64,16 +55,16 @@ CREATE TABLE IF NOT EXISTS `matiér` (
 --
 
 CREATE TABLE IF NOT EXISTS `réclamation` (
-  `id_rec` int(11) NOT NULL DEFAULT '0',
-  `type` varchar(50) NOT NULL,
-  `matricule_etd` int(11) DEFAULT NULL,
-  `email` varchar(50) NOT NULL,
+  `id_rec` int(11) NOT NULL AUTO_INCREMENT,
+  `Détails` varchar(50) NOT NULL,
+  `Objet_rec` varchar(50) NOT NULL,
+  `moment_de_creation` date NOT NULL,
+  `matricule_etd` int(11) NOT NULL,
   `code_mat` varchar(50) DEFAULT NULL,
   PRIMARY KEY (`id_rec`),
   KEY `matricule_etd` (`matricule_etd`),
-  KEY `email` (`email`),
   KEY `code_mat` (`code_mat`)
-) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=3 ;
 
 --
 -- Constraints for dumped tables
@@ -84,8 +75,7 @@ CREATE TABLE IF NOT EXISTS `réclamation` (
 --
 ALTER TABLE `réclamation`
   ADD CONSTRAINT `réclamation_ibfk_1` FOREIGN KEY (`matricule_etd`) REFERENCES `etudiant` (`matricule_etd`),
-  ADD CONSTRAINT `réclamation_ibfk_2` FOREIGN KEY (`email`) REFERENCES `administration` (`email`),
-  ADD CONSTRAINT `réclamation_ibfk_3` FOREIGN KEY (`code_mat`) REFERENCES `matiér` (`code_mat`);
+  ADD CONSTRAINT `réclamation_ibfk_2` FOREIGN KEY (`code_mat`) REFERENCES `matiér` (`code_mat`);
 
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;

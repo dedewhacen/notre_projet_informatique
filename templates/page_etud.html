@@ -29,6 +29,16 @@
     </style>
 </head>
 <body class="bg-light">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
     <div class="container py-5">
         <div class="card custom-card">
             <div class="card-header bg-primary text-white">
@@ -39,12 +49,12 @@
                     <div class="row form-section">
                         <div class="col-md-6 mb-3">
                             <label for="matricule" class="form-label">Matricule</label>
-                            <input type="text" class="form-control" id="matricule" name="matricule" 
+                            <input type="text" class="form-control" id="matricule" name="matricule"
                                    pattern="\d{1,5}" required placeholder="Ex:23500">
                         </div>
                         <div class="col-md-6 mb-3">
                             <label for="email" class="form-label">Email</label>
-                            <input type="email" class="form-control" id="email" name="email" 
+                            <input type="email" class="form-control" id="email" name="email"
                                    required placeholder="23500@isme.esp.mr">
                         </div>
                     </div>
@@ -92,6 +102,12 @@
                         </div>
                     </div>
 
+                    <!-- Ajouter ceci avant le bouton d'envoi -->
+                    <div class="mb-3">
+                    <label for="details" class="form-label">Détails supplémentaires</label>
+                        <textarea class="form-control" id="details" name="details" rows="3"></textarea>
+                     </div>
+
                     <button type="submit" class="btn btn-primary submit-btn w-100 py-2">Envoyer la réclamation</button>
                 </form>
             </div>
@@ -104,9 +120,9 @@
         function updateSemestres() {
             const licence = document.getElementById("licence");
             const semestre = document.getElementById("semestre");
-            
+
             semestre.innerHTML = "<option value=''>Choisir un semestre</option>";
-            
+
             if (licence.value === "L1") {
                 semestre.innerHTML += `
                     <option value="S1">Semestre 1</option>
@@ -116,73 +132,73 @@
                     <option value="S3">Semestre 3</option>
                     <option value="S4">Semestre 4</option>`;
             }
-            
+
             document.getElementById("matiere").innerHTML = "<option value=''>Choisir une matière</option>";
             updateMatieres();
         }
-    
+
         function updateMatieres() {
             const semestre = document.getElementById("semestre").value;
             const departement = document.getElementById("departement").value;
             const matiere = document.getElementById("matiere");
-            
+
             const matieres = {
-                S1: { 
+                S1: {
                     GCGP: ["GCGP11", "GCGP12", "GCGP13", "GCGP14", "GCGP15", "GCGP16", "ST_11", "ST_12" ,"ST_13", "HE_11", "HE_12", "HE_13"],
-                    GEER: ["GEER11", "GEER12", "GEER13", "GEER14", "GEER15", "GEER16", "ST_11", "ST_12" ,"ST_13", "HE_11", "HE_12", "HE_13"] 
+                    GEER: ["GEER11", "GEER12", "GEER13", "GEER14", "GEER15", "GEER16", "ST_11", "ST_12" ,"ST_13", "HE_11", "HE_12", "HE_13"]
                 },
-                S2: { 
+                S2: {
                     GCGP: ["GCGP21", "GCGP22", "GCGP23", "GCGP24", "GCGP25", "GCGP26","ST_21", "ST_22" ,"ST_23", "HE_21", "HE_22", "HE_23"],
-                    GEER: ["GEER21", "GEER22", "GEER23", "GEER24", "GEER25", "GEER26","ST_21", "ST_22" ,"ST_23", "HE_21", "HE_22", "HE_23"] 
+                    GEER: ["GEER21", "GEER22", "GEER23", "GEER24", "GEER25", "GEER26","ST_21", "ST_22" ,"ST_23", "HE_21", "HE_22", "HE_23"]
                 },
-                S3: { 
+                S3: {
                     GCGP: ["GCGP31", "GCGP32", "GCGP33", "GCGP34", "GCGP35", "GCGP36", "ST_31", "HE_31", "HE_32", "HE_33"],
-                    GEER: ["GEER31", "GEER32", "GEER33", "GEER34", "GEER35", "GEER36", "ST_31", "HE_31", "HE_32", "HE_33"] 
+                    GEER: ["GEER31", "GEER32", "GEER33", "GEER34", "GEER35", "GEER36", "ST_31", "HE_31", "HE_32", "HE_33"]
                 },
-                S4: { 
+                S4: {
                     GCGP: ["GCGP41", "GCGP42", "GCGP43", "GCGP44", "GCGP45", "GCGP46","ST_41", "HE_41", "HE_42", "HE_43"],
-                    GEER: ["GEER41", "GEER42", "GEER43", "GEER44", "GEER45", "GEER46","ST_41", "HE_41", "HE_42", "HE_43"] 
+                    GEER: ["GEER41", "GEER42", "GEER43", "GEER44", "GEER45", "GEER46","ST_41", "HE_41", "HE_42", "HE_43"]
                 }
             };
-            
+
             matiere.innerHTML = "<option value=''>Choisir une matière</option>";
-            
+
             if (semestre && departement && matieres[semestre]?.[departement]) {
                 matieres[semestre][departement].forEach(matiereItem => {
                     const option = new Option(matiereItem, matiereItem);
                     matiere.add(option);
                 });
             }
-            
+
             // Reset les options d'objet après changement de matière
             updateObjetOptions();
         }
-    
+
         function updateObjetOptions() {
             const matiereSelect = document.getElementById("matiere");
             const objetSelect = document.getElementById("objet");
             const selectedMatiere = matiereSelect.value;
-    
+
             // Réinitialiser les options
             objetSelect.innerHTML = '<option value="">Choisir un objet</option>';
-    
+
             if (selectedMatiere) {
                 // Déterminer le type de matière
-                const isSpecialite = selectedMatiere.startsWith("GCGP") || 
+                const isSpecialite = selectedMatiere.startsWith("GCGP") ||
                                    selectedMatiere.startsWith("GEER");
-    
+
                 // Ajouter les options correspondantes
-                const options = isSpecialite 
-                    ? ["Devoir", "TP", "Examen"] 
+                const options = isSpecialite
+                    ? ["Devoir", "TP", "Examen"]
                     : ["Devoir", "Examen"];
-    
+
                 options.forEach(option => {
                     const optionElement = new Option(option, option);
                     objetSelect.add(optionElement);
                 });
             }
         }
-    
+
         // Initialisation des événements
         document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('licence').addEventListener('change', updateSemestres);
