@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Paramètres</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</head>
+<body>
+    <div class="container mt-5">
+        <h2 class="mb-4">Paramètres</h2>
+
+        <!-- Section Profil -->
+        <div class="card mb-3">
+            <div class="card-header">Profil</div>
+            <div class="card-body">
+                <!-- Le formulaire de profil met à jour le nom et le prénom -->
+                <form action="{{ url_for('update_profile') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Nom</label>
+                        <input type="text" class="form-control" name="nom" value="{{ user.nom }}">
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Prénom</label>
+                        <input type="text" class="form-control" name="prenom" value="{{ user.prenom }}">
+                    </div>
+                    <button type="submit" class="btn btn-primary">Mettre à jour le profil</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Section Sécurité -->
+        <div class="card mb-3">
+            <div class="card-header">Sécurité</div>
+            <div class="card-body">
+                <!-- Le formulaire de sécurité permet de changer le mot de passe -->
+                <form action="{{ url_for('change_password') }}" method="POST">
+                    <div class="mb-3">
+                        <label class="form-label">Ancien mot de passe</label>
+                        <input type="password" class="form-control" name="old_password" required>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Nouveau mot de passe</label>
+                        <input type="password" class="form-control" name="new_password" required>
+                    </div>
+                    <button type="submit" class="btn btn-danger">Changer le mot de passe</button>
+                </form>
+            </div>
+        </div>
+
+        <!-- Bouton Retour -->
+        <a href="{{ url_for('suivi_reclamations_etud') }}" class="btn btn-secondary">Retour</a>
+    </div>
+</body>
+</html>

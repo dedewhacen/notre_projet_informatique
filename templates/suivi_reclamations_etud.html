@@ -1,50 +1,145 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="h-100">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Suivi des Réclamations</title>
+    <title>Suivi des Réclamations - ISME</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .header-bg {
+            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
+        }
+        .status-badge {
+            padding: 0.35rem 0.8rem;
+            border-radius: 20px;
+            font-size: 0.85rem;
+        }
+        .scrollable-content {
+            flex: 1;
+            min-height: 0;
+            overflow-y: auto;
+        }
+        .main-card {
+            height: calc(100vh - 20px);
+            margin: 10px;
+        }
+        @media (max-width: 768px) {
+            .main-card {
+                margin: 5px;
+                height: calc(100vh - 10px);
+            }
+            .action-btn span {
+                display: none;
+            }
+        }
+    </style>
 </head>
-<body class="container mt-4">
-    <!-- En-tête avec bouton de déconnexion et zone de recherche -->
-    <div class="d-flex justify-content-between mb-3">
-        <div class="input-group w-50">
-            <input type="text" class="form-control" placeholder="Rechercher...">
-            <button class="btn btn-primary" type="button">Rechercher</button>
+<body class="d-flex flex-column h-100 bg-light" style="margin: 0; overflow: hidden;">
+    <div class="main-card shadow-lg">
+        <!-- En-tête -->
+        <div class="header-bg text-white p-3 rounded-top">
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h4 mb-0">
+                    <i class="fas fa-file-contract me-2"></i>Suivi des Réclamations
+                </h1>
+                <div class="d-flex gap-2">
+                    <a href="/" class="btn btn-light btn-sm">
+                        <i class="fas fa-home"></i>
+                        <span class="d-none d-md-inline">Accueil</span>
+                    </a>
+                    <a href="/parametres" class="btn btn-light btn-sm">
+                        <i class="fas fa-cog"></i>
+                        <span class="d-none d-md-inline">Paramètres</span>
+                    </a>
+                    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
+                        <i class="fas fa-sign-out-alt"></i>
+                        <span class="d-none d-md-inline">Déconnexion</span>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Contenu principal -->
+        <div class="h-100 d-flex flex-column">
+            <!-- Barre d'outils -->
+            <div class="p-3 border-bottom">
+                <div class="row g-2 align-items-center">
+                    <div class="col-md-8">
+                        <form class="input-group">
+                            <input type="text" class="form-control"
+                                   placeholder="Rechercher une réclamation...">
+                            <button class="btn btn-primary" type="submit">
+                                <i class="fas fa-search"></i>
+                            </button>
+                        </form>
+                    </div>
+                    <div class="col-md-4 text-end mt-2 mt-md-0">
+                        <a href="{{ url_for('etudiant') }}" class="btn btn-success w-100">
+                            <i class="fas fa-plus-circle me-2"></i>Nouvelle Réclamation
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tableau -->
+            <div class="scrollable-content">
+                <div class="p-3">
+                    <table class="table table-hover align-middle mb-0">
+                        <thead class="sticky-top bg-light z-1">
+                            <tr>
+                                <th>#</th>
+                                <th>Matière</th>
+                                <th>Statut</th>
+                                <th>Description</th>
+                                <th>Date</th>
+                                <th class="text-center">Actions</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for rec in reclamations %}
+                            <tr>
+                                <td class="fw-bold">{{ loop.index }}</td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary py-2">{{ rec[5] }}</span></td>
+                                <td><span class="status-badge bg-warning text-dark"><i class="fas fa-paper-plane me-1"></i>Soumise</span></td>
+                                <td class="text-truncate" style="max-width: 300px;">{{ rec[1] }}</td>
+                                <td>{{ rec[3] }}</td>
+                                <td class="text-center">
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        <a href="{{ url_for('modifier_reclamation_etud', id_rec=rec[0]) }}"
+                                           class="btn btn-warning btn-sm">
+                                            <i class="fas fa-edit"></i>
+                                            <span class="d-none d-md-inline">Modifier</span>
+                                        </a>
+                                        <form method="POST" action="{{ url_for('supprimer_reclamation', id_rec=rec[0]) }}">
+                                            <button type="submit"
+                                                    class="btn btn-danger btn-sm"
+                                                    onclick="return confirm('Confirmer la suppression ?')">
+                                                <i class="fas fa-trash-alt"></i>
+                                                <span class="d-none d-md-inline">Supprimer</span>
+                                            </button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- Légende -->
+            <div class="p-3 border-top bg-light mt-auto">
+                <div class="d-flex flex-wrap align-items-center gap-3">
+                    <span class="text-muted">Légende :</span>
+                    <span class="status-badge bg-warning text-dark"><i class="fas fa-paper-plane"></i> Soumise</span>
+                    <span class="status-badge bg-info text-white"><i class="fas fa-spinner"></i> En traitement</span>
+                    <span class="status-badge bg-success text-white"><i class="fas fa-check-circle"></i> Résolue</span>
+                </div>
+            </div>
         </div>
     </div>
 
-    <h2 class="mb-4">Suivi des Réclamations</h2>
-
-    <table class="table table-bordered">
-        <thead class="table-dark">
-            <tr>
-                <th>Nombre</th>
-                <th>Code Matière</th>
-                <th>État d'envoi</th>
-                <th>Description</th>
-                <th>Actions</th>
-            </tr>
-        </thead>
-        <tbody>
-            {% for rec in reclamations %}
-            <tr>
-                <td>{{ loop.index }}</td>
-                <td>{{ rec[5] }}</td>
-                <td>Réclamation soumise</td>
-                <td>{{ rec[1] }}</td>
-                <td>
-                    <form action="{{ url_for('supprimer_reclamation', id_rec=rec[0]) }}" method="post" class="d-inline">
-                        <button type="submit" class="btn btn-danger" onclick="return confirm('Confirmer l\'annulation ?')">Annuler</button>
-                    </form>
-                    <a href="{{ url_for('modifier_reclamation_etud', id_rec=rec[0]) }}" class="btn btn-warning">Modifier</a>
-                </td>
-            </tr>
-            {% endfor %}
-        </tbody>
-    </table>
-
-    <a href="/" class="btn btn-secondary">Retour</a>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>
