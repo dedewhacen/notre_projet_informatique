@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-100">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Paramètres Administrateur - ISME</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    /* Réutilisation des styles existants */
+    .admin-gradient {
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+
+    .config-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+    }
+
+    .matiere-list {
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .niveau-badge {
+      background: #e9ecef;
+      color: #495057;
+      padding: 0.25rem 0.5rem;
+      border-radius: 20px;
+      font-size: 0.8rem;
+    }
+
+    .select-all-btn {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: white;
+      padding: 0.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+      .admin-sidebar {
+      width: 280px;
+      background: #f8f9fa;
+      border-right: 1px solid #dee2e6;
+      height: calc(100vh - 76px);
+      position: fixed;
+      padding: 1rem;
+    }
+
+    .admin-content {
+      margin-left: 280px;
+      padding: 2rem;
+      height: calc(100vh - 76px);
+      overflow-y: auto;
+    }
+
+    .config-card {
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+      margin-bottom: 1.5rem;
+      padding: 1.5rem;
+    }
+
+    .niveau-config {
+      border-left: 3px solid #0d6efd;
+      padding-left: 1rem;
+      margin: 1rem 0;
+    }
+
+    .sidebar-link {
+      display: block;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      color: #495057;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+
+    .sidebar-link.active {
+      background: #e9ecef;
+      color: #0d6efd;
+      font-weight: 500;
+    }
+
+    .semestre-badge {
+      font-size: 0.9em;
+      padding: 0.35em 0.65em;
+    }
+  </style>
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+
+  <!-- En-tête identique à la page d'accueil -->
+  <header class="admin-gradient text-white p-3 shadow">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="h4 mb-0">
+          <i class="fas fa-user-shield me-2"></i>Paramètres Administrateur
+        </h1>
+        <small class="text-white-50 opacity-75">Configuration du système de réclamations</small>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <div class="dropdown">
+          <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-sliders-h me-1"></i>
+            <span class="d-none d-md-inline">Outils</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><a class="dropdown-item" href="#"><i class="fas fa-home me-2"></i>Tableau de bord</a></li>
+            <li><hr class="dropdown-divider"></li>
+            <li><a class="dropdown-item" href="#"><i class="fas fa-download me-2"></i>Exporter configuration</a></li>
+          </ul>
+        </div>
+        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
+          <i class="fas fa-sign-out-alt me-1"></i>
+          <span class="d-none d-md-inline">Déconnexion</span>
+        </a>
+      </div>
+    </div>
+  </header>
+<div class="d-flex">
+  <!-- Menu latéral -->
+  <nav class="admin-sidebar">
+    <div class="d-flex flex-column gap-2">
+      <a href="#parametres" class="sidebar-link active" onclick="showSection('parametres')">
+        <i class="fas fa-cog me-2"></i>Paramètres des réclamations ISME
+      </a>
+      <a href="#informations" class="sidebar-link" onclick="showSection('informations')">
+        <i class="fas fa-user-shield me-2"></i>Informations personnelles
+      </a>
+    </div>
+  </nav>
+
+  <!-- Contenu principal -->
+  <main class="admin-content">
+
+    <!-- Section Paramètres des réclamations -->
+    <div id="parametres" class="config-section">
+      <div class="d-flex gap-3 mb-4">
+        <div class="btn-group">
+          <button class="btn btn-outline-primary active">Semestre Pair</button>
+          <button class="btn btn-outline-primary">Semestre Impair</button>
+        </div>
+
+        <div class="btn-group">
+          <button class="btn btn-outline-secondary active">Toutes spécialités</button>
+          <button class="btn btn-outline-secondary">GCGP</button>
+          <button class="btn btn-outline-secondary">GEER</button>
+        </div>
+      </div>
+
+      <!-- Configuration par niveau -->
+      <div class="config-card">
+        <h5 class="mb-4"><i class="fas fa-layer-group me-2"></i>Configuration par niveau</h5>
+
+        <!-- L1 -->
+        <div class="niveau-config">
+          <div class="d-flex justify-content-between align-items-center mb-3">
+            <h6>Licence 1 <span class="badge semestre-badge bg-primary">Semestre Pair</span></h6>
+            <div class="form-check form-switch">
+              <input class="form-check-input" type="checkbox" id="activateL1">
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label">Matières disponibles :</label>
+            <div class="ms-3">
+              <div class="form-check">
+                <input class="form-check-input" type="checkbox" id="matiere1">
+                <label class="form-check-label">GCGP11 - Mathématiques Appliquées</label>
+              </div>
+              <!-- Ajouter d'autres matières -->
+            </div>
+          </div>
+
+          <div class="row g-3 mb-3">
+            <div class="col-md-6">
+              <label class="form-label">Date d'ouverture</label>
+              <input type="datetime-local" class="form-control">
+            </div>
+            <div class="col-md-6">
+              <label class="form-label">Date de fermeture</label>
+              <input type="datetime-local" class="form-control">
+            </div>
+          </div>
+
+          <button class="btn btn-primary btn-sm">
+            <i class="fas fa-check me-2"></i>Valider pour L1
+          </button>
+        </div>
+
+        <!-- Répéter le même bloc pour L2 et L3 -->
+      </div>
+    </div>
+
+    <!-- Section Informations personnelles (cachée par défaut) -->
+    <div id="informations" class="config-section" style="display: none;">
+      <div class="config-card">
+        <h5 class="mb-4"><i class="fas fa-user-cog me-2"></i>Informations personnelles</h5>
+        <form>
+          <div class="mb-3">
+            <label class="form-label">Email administratif</label>
+            <input type="email" class="form-control" value="admin@isme.esp.mr">
+          </div>
+          <div class="mb-4">
+            <label class="form-label">Nouveau mot de passe</label>
+            <div class="input-group">
+              <input type="password" class="form-control">
+              <button class="btn btn-outline-secondary" type="button" onclick="generatePassword()">
+                <i class="fas fa-key"></i>
+              </button>
+            </div>
+          </div>
+          <button class="btn btn-primary w-100">
+            <i class="fas fa-save me-2"></i>Enregistrer
+          </button>
+        </form>
+      </div>
+    </div>
+  </main>
+</div>
+
+<script>
+  // Gestion de l'affichage des sections
+  function showSection(sectionId) {
+    document.querySelectorAll('.config-section').forEach(section => {
+      section.style.display = 'none';
+    });
+    document.getElementById(sectionId).style.display = 'block';
+
+    document.querySelectorAll('.sidebar-link').forEach(link => {
+      link.classList.remove('active');
+    });
+    event.currentTarget.classList.add('active');
+  }
+
+  // Gestion des boutons de filtre
+  document.querySelectorAll('.btn-group .btn').forEach(btn => {
+    btn.addEventListener('click', function() {
+      this.parentNode.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      this.classList.add('active');
+    });
+  });
+
+  // Garder la fonction generatePassword existante
+  function generatePassword() {
+    // ... (code existant)
+  }
+</script>
+
+</body>
+</html>

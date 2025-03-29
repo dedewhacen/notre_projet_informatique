@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Mar 14, 2025 at 12:22 PM
+-- Generation Time: Mar 22, 2025 at 02:35 PM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -32,9 +32,18 @@ CREATE TABLE IF NOT EXISTS `etudiant` (
   `Departement` varchar(50) NOT NULL,
   `Licence` varchar(50) NOT NULL,
   `Semestre` varchar(50) NOT NULL,
+  `pwd` char(5) NOT NULL,
   PRIMARY KEY (`matricule_etd`),
   UNIQUE KEY `Email` (`Email`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
+
+--
+-- Dumping data for table `etudiant`
+--
+
+INSERT INTO `etudiant` (`matricule_etd`, `Email`, `Departement`, `Licence`, `Semestre`, `pwd`) VALUES
+(23501, '23501@isme.esp.mr', 'GCGP', 'L2', 'S3', '23501'),
+(23502, '23502@isme.esp.mr', 'GEER', 'L2', 'S3', '23502');
 
 -- --------------------------------------------------------
 
@@ -59,6 +68,7 @@ INSERT INTO `matiér` (`code_mat`, `nom_mat`) VALUES
 ('HE_12', 'HE_12'),
 ('HE_13', 'HE_13'),
 ('HE_22', 'HE_22'),
+('HE_42', 'HE_42'),
 ('ST_11', 'ST_11'),
 ('ST_12', 'ST_12'),
 ('ST_13', 'ST_13');
@@ -80,7 +90,14 @@ CREATE TABLE IF NOT EXISTS `réclamation` (
   PRIMARY KEY (`id_rec`),
   KEY `matricule_etd` (`matricule_etd`),
   KEY `code_mat` (`code_mat`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=18 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=21 ;
+
+--
+-- Dumping data for table `réclamation`
+--
+
+INSERT INTO `réclamation` (`id_rec`, `Détails`, `Objet_rec`, `moment_de_creation`, `matricule_etd`, `code_mat`, `statut`) VALUES
+(0, 'llllll', 'td', '2025-03-22', 23501, 'GCGP15', 'En attente');
 
 -- --------------------------------------------------------
 
@@ -90,24 +107,8 @@ CREATE TABLE IF NOT EXISTS `réclamation` (
 
 CREATE TABLE IF NOT EXISTS `user` (
   `email` varchar(23) NOT NULL,
-  `pwd` varchar(100) NOT NULL
+  `pwd_admin` varchar(100) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
-
---
--- Dumping data for table `user`
---
-
-INSERT INTO `user` (`email`, `pwd`) VALUES
-('23501@isme.esp.mr', '2350123501'),
-('23502@isme.esp.mr', '2350223502'),
-('23503@isme.esp.mr', '2350323503'),
-('23504@isme.esp.mr', '2350423504'),
-('23505@isme.esp.mr', '2350523505'),
-('23506@isme.esp.mr', '2350623506'),
-('23507@isme.esp.mr', '2350723507'),
-('23508@isme.esp.mr', '2350823508'),
-('23509@isme.esp.mr', '2350923509'),
-('23510@isme.esp.mr', '2351023510');
 
 --
 -- Constraints for dumped tables
