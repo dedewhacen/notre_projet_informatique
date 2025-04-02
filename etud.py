@@ -49,29 +49,31 @@ def login():
 
 @app.route('/admin_dashboard')
 def admin_dashboard():
+    # Vérifier si l'admin est connecté
     if not session.get('logged_in') or session.get('role') != 'admin':
         flash("Accès réservé aux administrateurs.", "danger")
         return redirect(url_for('login'))
 
-    # Exécuter la requête SQL pour récupérer les données souhaitées
-    query = """
+    # Connexion et exécution SQL sécurisée
+    query= """
     SELECT 
-    e.Email AS 'Email_etudiant',
-    e.matricule_etd AS 'Matricule',
-    m.nom_mat AS 'Matiere_reclamee',
-    e.Departement AS 'Departement',
-    e.Licence AS 'Niveau',
-    r.statut AS 'Statut',
-    r.moment_de_creation AS 'Date_creation',
-    r.Objet_rec AS 'Objet_reclamation',
-    r.Détails AS 'Details_reclamation'
-FROM 
-    etudiant e 
-JOIN 
-    réclamation r ON e.matricule_etd = r.matricule_etd 
-JOIN 
-    matiér m ON r.code_mat = m.code_mat;
+        e.Email AS Email_etudiant,
+        e.matricule_etd AS Matricule,
+        m.code_mat AS Matiere_reclamee,
+        e.Departement AS Departement,
+        e.Licence AS Niveau,
+        r.statut AS Statut,
+        r.moment_de_creation AS Date_creation,
+        r.Objet_rec AS Objet_reclamation,
+        r.Détails AS Details_reclamation
+    FROM 
+        etudiant e 
+    JOIN 
+        reclamation r ON e.matricule_etd = r.matricule_etd 
+    JOIN 
+        matiere m ON r.code_mat = m.code_mat;
     """
+
     cursor.execute(query)
     # Récupère toutes les lignes ; chaque ligne est un tuple
     results = cursor.fetchall()
@@ -100,24 +102,35 @@ def suivi_reclamations_etud():
         return redirect(url_for('login'))
 
     # Récupérer le matricule via l'email de session
-    email = session['user_email']
+    email = session.get('user_email')  # Utilisation de .get() pour éviter KeyError
+    if not email:
+        flash("Erreur : aucune session utilisateur détectée.", "danger")
+        return redirect(url_for('login'))
+
     cursor.execute("SELECT matricule_etd FROM etudiant WHERE Email = %s", (email,))
-    matricule = cursor.fetchone()[0]  # [0] car fetchone() retourne un tuple
+    result = cursor.fetchone()
+
+    if not result:  # Vérifier si l'étudiant existe
+        flash("Aucun étudiant trouvé avec cet email.", "warning")
+        return redirect(url_for('login'))
+
+    matricule = result[0]  # Récupérer la valeur correcte
 
     # Filtrer par matricule
     cursor.execute("""
-        SELECT id_rec, Détails, Objet_rec, moment_de_creation, matricule_etd, code_mat 
-        FROM réclamation 
+        SELECT id_rec, Détails, Objet_rec, moment_de_creation, matricule_etd, code_mat, statut 
+        FROM reclamation 
         WHERE matricule_etd = %s
     """, (matricule,))
 
     reclamations = cursor.fetchall()
+
     return render_template('suivi_reclamations_etud.html', reclamations=reclamations)
 
 
 @app.route('/supprimer_reclamation/<int:id_rec>', methods=['POST'])
 def supprimer_reclamation(id_rec):
-    cursor.execute("DELETE FROM réclamation WHERE id_rec = %s", (id_rec,))
+    cursor.execute("DELETE FROM reclamation WHERE id_rec = %s", (id_rec,))
     conn.commit()
     return redirect(url_for('suivi_reclamations_etud'))
 
@@ -142,14 +155,12 @@ def modifier_reclamation_etud(id_rec):
 
 
 @app.route('/etudiant', methods=['GET', 'POST'])
-
-
 def etudiant():
     email = session.get('user_email')
     message = None
     category = 'success'
 
-    # Récupération des données étudiant
+    # Récupération des données etudiant
     cursor.execute("SELECT matricule_etd, Email, Licence, Departement FROM etudiant WHERE Email = %s",
                    (email,))
     etudiant_data = cursor.fetchone()
@@ -163,13 +174,11 @@ def etudiant():
             moment_de_reclamation = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             objets_str = ','.join(objet_rec)
 
-            # Vérification existence de la matière
-            cursor.execute("INSERT IGNORE INTO matiér (code_mat, nom_mat) VALUES (%s, %s)",
-                           (matiere, matiere))
+
 
             # Insertion réclamation avec vérification unicité
             cursor.execute("""
-                INSERT INTO réclamation (Détails, Objet_rec, moment_de_creation, matricule_etd, code_mat) 
+                INSERT INTO reclamation (Détails, Objet_rec, moment_de_creation, matricule_etd, code_mat) 
                 VALUES (%s, %s, %s, %s, %s)
             """, (details, objets_str, moment_de_reclamation, matricule, matiere))
 
@@ -188,6 +197,7 @@ def etudiant():
                            etudiant=etudiant_data,
                            message=message,
                            category=category)
+
 
 
 @app.route('/get_claimed_matieres')
@@ -219,17 +229,49 @@ def parametres():
 
     return render_template('parametres.html', user=user)
 
+#parametres administrateur
 @app.route('/parametres_admin')
 def parametres_admin():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    # Supposons que l'email stocké dans la session identifie l'utilisateur.
     email = session['user_email']
-    cursor.execute("SELECT email_admin,pwd_admin FROM user WHERE email_admin = %s", (email,))
+    cursor.execute("SELECT email_admin, pwd_admin FROM user WHERE email_admin = %s", (email,))
     user_A = cursor.fetchone()
 
-    return render_template('parametres_admin.html',user_A=user_A)
+    cursor.execute("SELECT code_mat FROM matiere")
+    matieres = [row[0] for row in cursor.fetchall()]
+
+    # Structure des matières organisées par niveau et semestre
+    structured_data = {
+        'L1': {'S1': [], 'S2': []},
+        'L2': {'S3': [], 'S4': []},
+        'L3': {'S5': []}  # Pas de S6
+    }
+
+    for matiere in matieres:
+        # Identifier la partie lettre (département) et chiffres (code)
+        dept = ''.join(filter(str.isalpha, matiere))  # Ex: "GCGP", "GEER", "ST"
+        code = ''.join(filter(str.isdigit, matiere))  # Ex: "11", "31", "41"
+
+        if len(code) < 2:
+            continue  # Évite les erreurs si le code est mal formé
+
+        semestre_num = int(code[0])  # Ex: 1 → S1, 3 → S3
+        semestre = f'S{semestre_num}'
+        niveau = f'L{(semestre_num + 1) // 2}'  # Ex: S1, S2 → L1 | S3, S4 → L2
+
+        if niveau in structured_data and semestre in structured_data[niveau]:
+            structured_data[niveau][semestre].append({
+                'code': matiere,
+                'dept': dept,
+                'numero': code[1]  # Deuxième chiffre pour différencier les matières
+            })
+
+    return render_template('parametres_admin.html', matieres=structured_data, user_A=user_A)
+
+
+
 @app.route('/change_password', methods=['POST'])
 def change_password():
     if not session.get('logged_in'):
