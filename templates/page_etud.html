@@ -130,15 +130,22 @@
                     </div>
                 </div>
 
-                <!-- Matière -->
-                <div class="mb-4">
-                    <div class="form-floating">
-                        <select class="form-select" id="matiere" name="matiere" required>
-                            <option value="">Choisir une matière</option>
-                        </select>
-                        <label for="matiere"><i class="fas fa-book me-2"></i>Matière</label>
-                    </div>
-                </div>
+               <!-- Matière -->
+        <div class="mb-4">
+           <div class="form-floating">
+             <select class="form-select" id="matiere" name="matiere" required>
+                <option value="">Choisir une matière</option>
+                 <!-- Début de la modification -->
+                 {% for matiere in matieres %}
+                 <option value="{{ matiere }}">{{ matiere }}</option>
+                 {% else %}
+                <option disabled>Aucune matière disponible pour votre niveau</option>
+               {% endfor %}
+            <!-- Fin de la modification -->
+            </select>
+           <label for="matiere"><i class="fas fa-book me-2"></i>Matière</label>
+        </div>
+       </div>
 
                 <!-- Objet -->
                 <div class="mb-4">

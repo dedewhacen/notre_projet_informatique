@@ -15,7 +15,8 @@
         {% endfor %}
       {% endif %}
     {% endwith %}
-    <form method="POST">
+    <form method="POST" action="/">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
         <div class="mb-3">
             <label for="email" class="form-label">Email</label>
             <input type="text" name="email" id="email" class="form-control" required>

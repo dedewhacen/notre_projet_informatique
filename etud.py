@@ -1,9 +1,11 @@
 from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
 import mysql.connector
 from datetime import datetime
-
+from flask_wtf.csrf import CSRFProtect
+from werkzeug.security import generate_password_hash, check_password_hash
 app = Flask(__name__)
-app.secret_key = 'votre_cle_secrete'  # IMPORTANT : définissez ici une clé secrète pour les sessions
+csrf = CSRFProtect(app)
+app.secret_key = 'votre_cle_secrete_tres_secrete'  # Clé complexe
 
 # Connexion à la base de données
 conn = mysql.connector.connect(
@@ -125,7 +127,9 @@ def suivi_reclamations_etud():
 
     reclamations = cursor.fetchall()
 
-    return render_template('suivi_reclamations_etud.html', reclamations=reclamations)
+    cursor.execute("SELECT MAX(date_fermeture) FROM configuration_reclamation")
+    date_fermeture = cursor.fetchone()[0]
+    return render_template('suivi_reclamations_etud.html', reclamations=reclamations,date_fermeture=date_fermeture)
 
 
 @app.route('/supprimer_reclamation/<int:id_rec>', methods=['POST'])
@@ -142,14 +146,14 @@ def modifier_reclamation_etud(id_rec):
         # Mettre à jour le moment de modification
         moment_de_reclamation = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
         cursor.execute("""
-            UPDATE réclamation
+            UPDATE reclamation
             SET Objet_rec = %s, Détails = %s, moment_de_creation = %s
             WHERE id_rec = %s
         """, (objet_rec, details, moment_de_reclamation, id_rec))
         conn.commit()
         return redirect(url_for('suivi_reclamations_etud'))
     else:
-        cursor.execute("SELECT id_rec, Détails, Objet_rec FROM réclamation WHERE id_rec = %s", (id_rec,))
+        cursor.execute("SELECT id_rec, Détails, Objet_rec FROM reclamation WHERE id_rec = %s", (id_rec,))
         reclamation = cursor.fetchone()
         return render_template('modifier_reclamation_etud.html', reclamation=reclamation)
 
@@ -164,11 +168,24 @@ def etudiant():
     cursor.execute("SELECT matricule_etd, Email, Licence, Departement FROM etudiant WHERE Email = %s",
                    (email,))
     etudiant_data = cursor.fetchone()
+    niveau_etudiant = etudiant_data[2]  # Licence est à l'index 2 (L1, L2, etc.)
+    # Requête pour les matières configurées par l'admin
+    cursor.execute("""
+            SELECT m.code_mat 
+            FROM configuration_reclamation c
+            JOIN matiere m ON c.code_mat = m.code_mat 
+            WHERE c.niveau = %s
+        """, (niveau_etudiant,))
+
+    matieres_autorisees = [row[0] for row in cursor.fetchall()]
 
     if request.method == 'POST':
         try:
             matricule = request.form['matricule']
             matiere = request.form['matiere']
+            if matiere not in matieres_autorisees:
+                flash("Cette matière n'est pas autorisée pour votre niveau", "danger")
+                return redirect(url_for('etudiant'))
             objet_rec = request.form.getlist('objet')
             details = request.form['details']
             moment_de_reclamation = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
@@ -199,7 +216,79 @@ def etudiant():
                            category=category)
 
 
+@app.route('/save-config', methods=['POST'])
+def save_config():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify(error="Accès non autorisé"), 403
 
+    try:
+        configs = request.get_json()
+        if not isinstance(configs, list):
+            return jsonify(error="Format de données invalide"), 400
+
+        for config in configs:
+            niveau = config.get('niveau')
+            matieres = config.get('matieres')
+            date_fermeture = config.get('date_fermeture')
+
+            # Validation des champs
+            if not all([niveau, matieres, date_fermeture]):
+                continue  # Ignore les entrées invalides
+
+            # Vérifier existence configuration
+            cursor.execute("""
+                SELECT id, code_mat 
+                FROM configuration_reclamation 
+                WHERE niveau = %s AND date_fermeture = %s
+            """, (niveau, date_fermeture))
+            existing = cursor.fetchone()
+
+            if existing:
+                # Fusionner les matières
+                anciennes = existing[1].split(',') if existing[1] else []
+                nouvelles = list(set(anciennes + matieres))
+
+                cursor.execute("""
+                    UPDATE configuration_reclamation 
+                    SET code_mat = %s 
+                    WHERE id = %s
+                """, (','.join(nouvelles), existing[0]))
+            else:
+                # Nouvelle entrée
+                cursor.execute("""
+                    INSERT INTO configuration_reclamation 
+                    (niveau, code_mat, date_fermeture)
+                    VALUES (%s, %s, %s)
+                """, (niveau, ','.join(matieres), date_fermeture))
+
+        conn.commit()
+        return jsonify(success=True)
+
+    except Exception as e:
+        conn.rollback()
+        return jsonify(error=f"Erreur : {str(e)}"), 500
+@app.route('/change_admin_password', methods=['POST'])
+def change_admin_password():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify(error="Accès non autorisé"), 403
+
+    old_password = request.form.get('old_password')
+    new_password = request.form.get('new_password')
+
+    # Vérification des identifiants
+    cursor.execute("SELECT pwd_admin FROM user WHERE email_admin = %s", (session['user_email'],))
+    result = cursor.fetchone()
+
+    if not result or not check_password_hash(result[0], old_password):
+        return jsonify(error="Ancien mot de passe incorrect")
+
+    # Mise à jour du mot de passe
+    hashed_password = generate_password_hash(new_password)
+    cursor.execute("UPDATE user SET pwd_admin = %s WHERE email_admin = %s",
+                   (hashed_password, session['user_email']))
+    conn.commit()
+
+    return jsonify(success=True)
 @app.route('/get_claimed_matieres')
 def get_claimed_matieres():
     if not session.get('logged_in'):

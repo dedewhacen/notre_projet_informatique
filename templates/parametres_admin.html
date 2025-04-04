@@ -3,6 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>Paramètres Administrateur - ISME</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
@@ -227,9 +228,6 @@
             <div class="col-md-6">
               <label class="form-label">Type de semestre</label>
               <div class="btn-group w-100">
-                <button class="btn btn-outline-primary semestre-filter active filter-btn" data-semestre="all">
-                  <i class="fas fa-layer-group me-2"></i>Tous
-                </button>
                 <button class="btn btn-outline-primary semestre-filter filter-btn" data-semestre="impair">
                   <i class="fas fa-caret-up me-2"></i>Impair
                 </button>
@@ -268,11 +266,12 @@
 
           {% for niveau, semestres in matieres.items() %}
           <!-- Niveau {{ niveau }} -->
-          <div class="niveau-config">
+          <div class="niveau-config" id="niveau-{{ niveau }}">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5>Licence {{ niveau[-1] }}</h5>
               <div class="form-check form-switch">
                 <input class="form-check-input niveau-switch" type="checkbox" id="activate{{ niveau }}" data-niveau="{{ niveau }}">
+
               </div>
             </div>
 
@@ -284,14 +283,13 @@
                   <span class="badge semestre-badge bg-primary me-2">{{ semestre }}</span>
                   <small class="text-muted">(Semestre {{ 'Pair' if semestre[-1]|int %2 ==0 else 'Impair' }})</small>
                   <!-- Ajout de la checkbox Tout sélectionner -->
-   <div class="ms-auto d-flex align-items-center gap-2">
-           <div class="form-check form-check-inline">
+              <div class="ms-auto d-flex align-items-center gap-2">
+             <div class="form-check form-check-inline">
              <input type="checkbox"
              class="form-check-input semestre-check-all"
              onchange="toggleSemestreCheckboxes('{{ semestre }}', '{{ niveau }}', this.checked)"
              id="checkAll_{{ niveau }}_{{ semestre }}">
-           <label class="form-check-label small text-muted" for="checkAll_{{ niveau }}_{{ semestre }}">Tout sélectionner
-      </label>
+           <label class="form-check-label small text-muted" for="checkAll_{{ niveau }}_{{ semestre }}">Tout sélectionner</label>
            </div>
    </div>
                 </div>
@@ -322,7 +320,7 @@
 
               <div class="col-md-6">
                 <label class="form-label">Date de fermeture</label>
-                <input type="datetime-local" class="form-control date-input" data-niveau="{{ niveau }}" id="closeDate{{ niveau }}">
+                <input type="date" class="form-control date-input" id="closeDate{{ niveau }}" required>
               </div>
             </div>
 
@@ -342,7 +340,8 @@
         <div class="config-card">
           <h4 class="mb-4"><i class="fas fa-user-cog me-2"></i>Informations personnelles</h4>
 
-          <form id="adminInfoForm">
+          <form id="adminInfoForm" method="POST" action="{{ url_for('change_admin_password') }}">
+           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
             <div class="row g-3">
               <div class="col-md-6">
                 <label class="form-label">Email administratif</label>
@@ -387,73 +386,115 @@
   </div>
 
   <script>
-
+  // Helper pour vérifier la visibilité d'un élément et de ses parents
+const isElementVisible = (element) => {
+  if (!element) return true
+  if (getComputedStyle(element).display === 'none') return false
+  return isElementVisible(element.parentElement)
+}
+// Objectif : Sauvegarder toutes les configurations des niveaux en validant les données avant envoi au serveur
     // Fonction pour sauvegarder toutes les configurations des niveaux
-function saveAllConfigs() {
-  const allConfigs = {};
-  let isValid = false; // Sert à vérifier si au moins un niveau est activé
-  let errorMessages = [];
-   // Parcours de chaque bloc de configuration de niveau
+async function saveAllConfigs() {
+  const groupedConfigs = {}; // Stockage groupé par niveau+date
+  const errors = [];
+  const now = new Date();
 
-  document.querySelectorAll('.niveau-config').forEach(niveauDiv => {
-    const niveau = niveauDiv.querySelector('.niveau-switch').dataset.niveau;
-    const isActive = document.getElementById(`activate${niveau}`).checked;
-    const closeDate = document.getElementById(`closeDate${niveau}`).value;
+  // Parcours des configurations par niveau
+  document.querySelectorAll('[data-niveau]').forEach(niveauDiv => {
+     const niveau = niveauDiv.dataset.niveau; // L1, L2, L3
+    const niveauSwitch = document.getElementById(`activate${niveau}`);
 
-    const selectedMatieres = [];
+    // Ignorer les niveaux désactivés
+    if (!niveauSwitch.checked) return;
+
+    // Validation de la date
+    const closeDateInput = document.getElementById(`closeDate${niveau}`);
+    const closeDate = new Date(closeDateInput.value);
+
+    if (!closeDateInput.value) {
+      errors.push(`Date manquante pour ${niveau}`);
+      return;
+    }
+    if (closeDate < now) {
+      errors.push(`La date de fermeture pour ${niveau} est dans le passé`);
+    }
+
+    // Récupération des matières cochées ET visibles
+    const matieres = [];
     niveauDiv.querySelectorAll('.matiere-checkbox:checked').forEach(checkbox => {
-      selectedMatieres.push(checkbox.value);
+      if (isElementVisible(checkbox.closest('.semestre-group')) &&
+          isElementVisible(checkbox.closest('.matiere-item'))) {
+        matieres.push(checkbox.value);
+      }
     });
 
-// Si le niveau est activé, alors il faut qu'au moins une matière soit sélectionnée et qu'une date de fermeture soit indiquée
-    if (isActive) {
-      isValid = true;
-      if (selectedMatieres.length === 0) {
-        errorMessages.push(`Vous devez sélectionner au moins une matière pour le niveau ${niveau}.`);
-      }
-      if (!closeDate) {
-        errorMessages.push(`Vous devez définir une date de fermeture pour le niveau ${niveau}.`);
-      }
+    // Clé unique pour grouper par niveau+date
+    const configKey = `${niveau}_${closeDateInput.value}`;
+
+    if (groupedConfigs[configKey]) {
+      // Fusion des matières existantes et nouvelles
+      groupedConfigs[configKey].matieres = [...new Set([
+        ...groupedConfigs[configKey].matieres,
+        ...matieres
+      ])];
+    } else {
+      // Nouvelle configuration
+      groupedConfigs[configKey] = {
+        niveau: niveau,
+        matieres: matieres,
+        date_fermeture: closeDateInput.value // Format YYYY-MM-DD
+      };
     }
-   // Sauvegarde de la configuration de ce niveau
-    allConfigs[niveau] = {
-      active: isActive,
-      closeDate,
-      matieres: selectedMatieres
-    };
   });
- // Si aucun niveau n'est activé, ajouter un message d'erreur
-  if (!isValid) {
-    errorMessages.push("Vous devez activer au moins un niveau.");
-  }
-  // Si des erreurs sont présentes, les afficher et interrompre l'enregistrement
-  if (errorMessages.length > 0) {
-    alert("Erreur(s) :\n" + errorMessages.join("\n"));
-    return;
-  }
- // Ici, ajouter le code pour envoyer ces données au serveur (ex. via AJAX)
-  console.log('Configurations validées:', allConfigs);
-  alert('Toutes les modifications ont été enregistrées avec succès !');
 
-  // Redirection vers la page d'accueil après sauvegarde
-  window.location.href = "/admin_dashboard"; // Adaptez l'URL à votre application
+  // Gestion des erreurs
+  if (errors.length > 0) return alert("Erreurs :\n" + errors.join("\n"));
+
+  const configsArray = Object.values(groupedConfigs);
+  if (configsArray.length === 0) return alert("Aucune configuration valide !");
+
+  try {
+    const response = await fetch('/save-config', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+      },
+      body: JSON.stringify(configsArray)
+    });
+
+    const data = await response.json();
+
+    if (!response.ok) {
+      throw new Error(data.error || "Erreur serveur inconnue");
+    }
+
+    alert("Configuration sauvegardée avec succès !");
+    window.location.reload();
+
+  } catch (error) {
+    console.error("Erreur détaillée:", error);
+    alert(`Échec de la sauvegarde : ${error.message}`);
+  }
 }
-// Fonction pour filtrer l'affichage des semestres en fonction du type sélectionné (pair, impair ou tous)
-document.querySelectorAll('.semestre-filter').forEach(btn => {
-  btn.addEventListener('click', function() {
-    this.parentNode.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
-    this.classList.add('active');
 
-    const semestreType = this.dataset.semestre;
+  // Objectif : Filtrer l'affichage des semestres (pair/impair/tous) et masquer les niveaux sans semestres visibles
+// Remplacer la gestion des filtres semestre
+document.querySelectorAll('.semestre-filter').forEach(btn => {
+  btn.addEventListener('click', (event) => {
+    const btn = event.currentTarget;
+    btn.parentNode.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const semestreType = btn.dataset.semestre;
+
     document.querySelectorAll('.semestre-group').forEach(group => {
       const sem = group.dataset.semestre;
       const isPair = sem.slice(-1) % 2 === 0;
 
-      group.style.display =
-        (semestreType === 'all') ||
-        (semestreType === 'pair' && isPair) ||
-        (semestreType === 'impair' && !isPair)
-        ? 'block' : 'none';
+      group.style.display = (semestreType === 'pair' && isPair) ||
+                           (semestreType === 'impair' && !isPair)
+                           ? 'block' : 'none';
     });
 
     // Masquer les niveaux sans semestres visibles
@@ -461,9 +502,20 @@ document.querySelectorAll('.semestre-filter').forEach(btn => {
       const visibleSemestres = niveauDiv.querySelectorAll('.semestre-group[style*="display: block"]');
       niveauDiv.style.display = visibleSemestres.length > 0 ? 'block' : 'none';
     });
+
+    setTimeout(updateGlobalCheckboxes, 50);
   });
 });
 
+// Sélection par défaut au chargement
+document.addEventListener('DOMContentLoaded', () => {
+  // Activer le filtre "pair" par défaut
+  document.querySelector('.semestre-filter[data-semestre="pair"]').click();
+
+  // Conserver l'initialisation du filtre département
+  document.querySelector('.dept-filter[data-dept="all"]').click();
+});
+    // Objectif : Afficher une section d'administration spécifique et masquer les autres
 // Fonction pour afficher une section spécifique et masquer les autres
 function showSection(sectionId) {
   document.querySelectorAll('.config-section').forEach(section => {
@@ -476,7 +528,7 @@ function showSection(sectionId) {
   });
   event.currentTarget.classList.add('active');
 }
-
+// Objectif : Activer/désactiver tous les niveaux simultanément via le switch global
 // Activation/désactivation de tous les niveaux via un switch global
 document.getElementById('activateAll').addEventListener('change', function(e) {
   const isChecked = e.target.checked;
@@ -486,7 +538,7 @@ document.getElementById('activateAll').addEventListener('change', function(e) {
     switchEl.checked = isChecked;
   });
 });
-
+    // Objectif : Mettre à jour l'état des matières et boutons "Tout sélectionner" selon l'activation du niveau
 // Fonction qui met à jour l'état des cases à cocher des matières et du bouton "Tout sélectionner" pour un niveau donné
 function updateMatiereCheckboxesState(niveau) {
   // Vérifier si le niveau est activé
@@ -501,7 +553,6 @@ function updateMatiereCheckboxesState(niveau) {
     }
   });
 
-  // Mettre à jour le bouton "Tout sélectionner" pour chaque groupe de semestre de ce niveau
   const semestreGroups = document.querySelectorAll(`.semestre-group[data-niveau="${niveau}"]`);
   semestreGroups.forEach(group => {
     const selectAllCheckbox = group.querySelector('.semestre-check-all');
@@ -513,7 +564,7 @@ function updateMatiereCheckboxesState(niveau) {
     }
   });
 }
-
+    // Objectif : Synchroniser le switch global avec l'état des switches individuels des niveaux
 // Ajout d'un écouteur sur chaque switch de niveau pour mettre à jour les cases à cocher dès changement
 document.querySelectorAll('.niveau-switch').forEach(switchEl => {
   const niveau = switchEl.dataset.niveau;
@@ -526,7 +577,6 @@ document.querySelectorAll('.niveau-switch').forEach(switchEl => {
   });
 });
 
-// Mise à jour lors de l'activation/désactivation globale via le switch "activateAll"
 document.getElementById('activateAll').addEventListener('change', function(e) {
   const isChecked = e.target.checked;
   // Mettre à jour tous les switches des niveaux
@@ -538,9 +588,8 @@ document.getElementById('activateAll').addEventListener('change', function(e) {
   });
 });
 
-// Mise à jour de la fonction de "tout sélectionner" pour vérifier l'état du niveau
+// Objectif : Basculer toutes les matières d'un semestre (cochées/décochées) si le niveau est activé
 function toggleSemestreCheckboxes(semestre, niveau, isChecked) {
-  // Si le niveau n'est pas activé, ne rien faire
   const levelActive = document.getElementById(`activate${niveau}`).checked;
   if (!levelActive) return;
 
@@ -551,7 +600,6 @@ function toggleSemestreCheckboxes(semestre, niveau, isChecked) {
     checkbox.checked = isChecked;
   });
 }
-// Synchronisation du switch global en fonction des switches individuels
 document.querySelectorAll('.niveau-switch').forEach(switchEl => {
   switchEl.addEventListener('change', function() {
     const allChecked = [...document.querySelectorAll('.niveau-switch')]
@@ -561,7 +609,7 @@ document.querySelectorAll('.niveau-switch').forEach(switchEl => {
   });
 });
 
-// Fonction pour synchroniser le switch global avec l'état initial des switches individuels
+// Objectif : Synchroniser l'état initial du switch global avec les switches individuels
 function syncGlobalSwitch() {
   const allChecked = [...document.querySelectorAll('.niveau-switch')]
     .every(switchEl => switchEl.checked);
@@ -572,7 +620,7 @@ function syncGlobalSwitch() {
 // Exécution au chargement de la page pour s'assurer que le switch global est bien réglé
 document.addEventListener('DOMContentLoaded', syncGlobalSwitch);
 
-// Filtre des matières par département sélectionné
+// Objectif : Filtrer l'affichage des matières par département sélectionné
 document.querySelectorAll('.dept-filter').forEach(btn => {
   btn.addEventListener('click', function() {
     this.parentNode.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
@@ -588,7 +636,7 @@ document.querySelectorAll('.dept-filter').forEach(btn => {
   });
 });
 
-// Génération d'un mot de passe sécurisé de 12 caractères
+// Objectif : Générer un mot de passe aléatoire sécurisé de 12 caractères
 function generatePassword() {
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&";
   let password = "";
@@ -600,7 +648,29 @@ function generatePassword() {
   document.getElementById('newPassword').value = password;
   alert("Mot de passe généré : " + password + "\nCopiez-le dans un endroit sûr !");
 }
+// Objectif : Gérer la soumission du formulaire de changement de mot de passe admin
+document.getElementById('adminInfoForm').addEventListener('submit', function(e) {
+    e.preventDefault();
 
+    const formData = new FormData(this);
+
+    fetch("{{ url_for('change_admin_password') }}", {
+        method: 'POST',
+        headers: {
+            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+        },
+        body: formData
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert("Mot de passe changé avec succès !");
+        } else {
+            alert("Erreur : " + data.error);
+        }
+    })
+    .catch(error => console.error('Error:', error));
+});
 // Sauvegarde de la configuration d'un niveau spécifique
 function saveNiveauConfig(niveau) {
   const isActive = document.getElementById(`activate${niveau}`).checked;
@@ -649,11 +719,30 @@ document.addEventListener('DOMContentLoaded', function() {
 function toggleSemestreCheckboxes(semestre, niveau, isChecked) {
   const checkboxes = document.querySelectorAll(
     `.matiere-checkbox[data-semestre="${semestre}"][data-niveau="${niveau}"]`
-  );
+  )
 
   checkboxes.forEach(checkbox => {
-    checkbox.checked = isChecked;
-  });
+    if (isElementVisible(checkbox.closest('.matiere-item'))) {
+      checkbox.checked = isChecked
+    }
+  })
+  updateGlobalCheckboxes() // Ajout de cette ligne
+}
+
+const updateGlobalCheckboxes = () => {
+  document.querySelectorAll('.semestre-group').forEach(group => {
+    const checkboxes = group.querySelectorAll('.matiere-checkbox:visible')
+    const checkAll = group.querySelector('.semestre-check-all')
+
+    if (checkboxes.length === 0) {
+      checkAll.checked = false
+      checkAll.disabled = true
+    } else {
+      checkAll.disabled = false
+      checkAll.checked = [...checkboxes].every(cb => cb.checked)
+      checkAll.indeterminate = !checkAll.checked && [...checkboxes].some(cb => cb.checked)
+    }
+  })
 }
 
 // Mise à jour de la case à cocher globale pour les matières d'un semestre
