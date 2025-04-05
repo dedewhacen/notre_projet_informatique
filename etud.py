@@ -1,11 +1,14 @@
 from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
 import mysql.connector
-from datetime import datetime
+from datetime import datetime, timezone, timedelta
 from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
+from apscheduler.schedulers.background import BackgroundScheduler
+import atexit
+
 app = Flask(__name__)
 csrf = CSRFProtect(app)
-app.secret_key = 'votre_cle_secrete_tres_secrete'  # Clé complexe
+app.secret_key = 'votre_cle_secrete_tres_secrete'
 
 # Connexion à la base de données
 conn = mysql.connector.connect(
@@ -15,7 +18,19 @@ conn = mysql.connector.connect(
     database="gestion_des_reclamation"
 )
 cursor = conn.cursor()
+# Configuration du scheduler pour la suppression automatique
+scheduler = BackgroundScheduler()
+scheduler.start()
 
+def delete_expired_configs():
+    with app.app_context():
+        now = datetime.now(timezone.utc)
+        cursor.execute("DELETE FROM configuration_reclamation WHERE date_fermeture <= %s", (now,))
+        conn.commit()
+        print(f"Suppression automatique effectuée à {now}")
+
+scheduler.add_job(delete_expired_configs, 'interval', minutes=1)
+atexit.register(lambda: scheduler.shutdown())
 # Route de connexion (page de login)
 @app.route('/', methods=['GET', 'POST'])
 def login():
@@ -164,41 +179,58 @@ def etudiant():
     message = None
     category = 'success'
 
-    # Récupération des données etudiant
+    # Récupération des données étudiant
     cursor.execute("SELECT matricule_etd, Email, Licence, Departement FROM etudiant WHERE Email = %s",
                    (email,))
     etudiant_data = cursor.fetchone()
-    niveau_etudiant = etudiant_data[2]  # Licence est à l'index 2 (L1, L2, etc.)
-    # Requête pour les matières configurées par l'admin
-    cursor.execute("""
-            SELECT m.code_mat 
-            FROM configuration_reclamation c
-            JOIN matiere m ON c.code_mat = m.code_mat 
-            WHERE c.niveau = %s
-        """, (niveau_etudiant,))
+    niveau_etudiant = etudiant_data[2]  # Licence (L1, L2, etc.)
+    departement_etudiant = etudiant_data[3]  # Département (GCGP, GEER, etc.)
 
-    matieres_autorisees = [row[0] for row in cursor.fetchall()]
+    # Récupération des matières autorisées pour le niveau
+    cursor.execute("""
+        SELECT code_mat 
+        FROM configuration_reclamation 
+        WHERE niveau = %s 
+        ORDER BY date_fermeture DESC 
+        LIMIT 1
+    """, (niveau_etudiant,))
+    result = cursor.fetchone()
+    matieres_autorisees = result[0].split(',') if result else []
+
+    # Filtrage des matières par département et niveau
+    filtered_matieres = []
+    if matieres_autorisees:
+        # Création des placeholders pour la clause IN
+        placeholders = ', '.join(['%s'] * len(matieres_autorisees))
+        # Requête pour filtrer les matières par département et niveau
+        query = f"""
+            SELECT code_mat 
+            FROM matiere 
+            WHERE code_mat IN ({placeholders}) 
+            AND (dept_mat = %s OR dept_mat = 'COMN')
+            AND niveau_de_licence = %s
+        """
+        params = tuple(matieres_autorisees) + (departement_etudiant, niveau_etudiant)
+        cursor.execute(query, params)
+        filtered_matieres = [row[0] for row in cursor.fetchall()]
 
     if request.method == 'POST':
         try:
             matricule = request.form['matricule']
             matiere = request.form['matiere']
-            if matiere not in matieres_autorisees:
-                flash("Cette matière n'est pas autorisée pour votre niveau", "danger")
+            if matiere not in filtered_matieres:
+                flash("Cette matière n'est pas autorisée pour votre niveau ou département", "danger")
                 return redirect(url_for('etudiant'))
             objet_rec = request.form.getlist('objet')
             details = request.form['details']
             moment_de_reclamation = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
             objets_str = ','.join(objet_rec)
 
-
-
             # Insertion réclamation avec vérification unicité
             cursor.execute("""
                 INSERT INTO reclamation (Détails, Objet_rec, moment_de_creation, matricule_etd, code_mat) 
                 VALUES (%s, %s, %s, %s, %s)
             """, (details, objets_str, moment_de_reclamation, matricule, matiere))
-
             conn.commit()
             flash("Réclamation soumise avec succès!", "success")
             return redirect(url_for('suivi_reclamations_etud'))
@@ -212,10 +244,12 @@ def etudiant():
 
     return render_template('page_etud.html',
                            etudiant=etudiant_data,
+                           matieres=filtered_matieres,
                            message=message,
                            category=category)
 
 
+# Modification de la route /save-config
 @app.route('/save-config', methods=['POST'])
 def save_config():
     if not session.get('logged_in') or session.get('role') != 'admin':
@@ -226,14 +260,23 @@ def save_config():
         if not isinstance(configs, list):
             return jsonify(error="Format de données invalide"), 400
 
+        current_time = datetime.now(timezone.utc)
+
         for config in configs:
             niveau = config.get('niveau')
             matieres = config.get('matieres')
-            date_fermeture = config.get('date_fermeture')
+            date_fermeture_str = config.get('date_fermeture')
 
-            # Validation des champs
-            if not all([niveau, matieres, date_fermeture]):
-                continue  # Ignore les entrées invalides
+            # Validation de la date
+            try:
+                date_fermeture = datetime.fromisoformat(date_fermeture_str).astimezone(timezone.utc)
+                min_time = datetime.now(timezone.utc) + timedelta(minutes=10)
+
+                if date_fermeture < min_time:
+                    return jsonify(error=f"La date doit être au moins 10 minutes dans le futur ({niveau})"), 400
+
+            except (ValueError, TypeError) as e:
+                return jsonify(error=f"Format de date invalide ({niveau})"), 400
 
             # Vérifier existence configuration
             cursor.execute("""
@@ -244,17 +287,14 @@ def save_config():
             existing = cursor.fetchone()
 
             if existing:
-                # Fusionner les matières
                 anciennes = existing[1].split(',') if existing[1] else []
                 nouvelles = list(set(anciennes + matieres))
-
                 cursor.execute("""
                     UPDATE configuration_reclamation 
                     SET code_mat = %s 
                     WHERE id = %s
                 """, (','.join(nouvelles), existing[0]))
             else:
-                # Nouvelle entrée
                 cursor.execute("""
                     INSERT INTO configuration_reclamation 
                     (niveau, code_mat, date_fermeture)
@@ -267,6 +307,45 @@ def save_config():
     except Exception as e:
         conn.rollback()
         return jsonify(error=f"Erreur : {str(e)}"), 500
+
+
+# Nouvelle route pour les réclamations actives
+@app.route('/active-configs')
+def get_active_configs():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify(error="Accès non autorisé"), 403
+
+    cursor.execute("""
+        SELECT id, niveau, code_mat, date_fermeture 
+        FROM configuration_reclamation 
+        WHERE date_fermeture > %s
+    """, (datetime.now(timezone.utc),))
+
+    configs = []
+    for row in cursor.fetchall():
+        configs.append({
+            'id': row[0],
+            'niveau': row[1],
+            'matieres': row[2].split(','),
+            'date_fermeture': row[3].isoformat()
+        })
+
+    return jsonify(configs)
+
+
+# Route pour suppression manuelle
+@app.route('/delete-config/<int:id>', methods=['DELETE'])
+def delete_config(id):
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify(error="Accès non autorisé"), 403
+
+    try:
+        cursor.execute("DELETE FROM configuration_reclamation WHERE id = %s", (id,))
+        conn.commit()
+        return jsonify(success=True)
+    except Exception as e:
+        conn.rollback()
+        return jsonify(error=str(e)), 500
 @app.route('/change_admin_password', methods=['POST'])
 def change_admin_password():
     if not session.get('logged_in') or session.get('role') != 'admin':
@@ -321,46 +400,88 @@ def parametres():
 #parametres administrateur
 @app.route('/parametres_admin')
 def parametres_admin():
-    if not session.get('logged_in'):
+    if not session.get('logged_in') or session.get('role') != 'admin':
         return redirect(url_for('login'))
 
     email = session['user_email']
     cursor.execute("SELECT email_admin, pwd_admin FROM user WHERE email_admin = %s", (email,))
     user_A = cursor.fetchone()
 
-    cursor.execute("SELECT code_mat FROM matiere")
-    matieres = [row[0] for row in cursor.fetchall()]
+    # Récupération des données structurées depuis la base
+    cursor.execute("""
+        SELECT code_mat, dept_mat, niveau_de_licence, semestre 
+        FROM matiere
+        WHERE niveau_de_licence IS NOT NULL 
+          AND semestre IS NOT NULL
+          AND dept_mat IS NOT NULL
+    """)
+    matieres_data = cursor.fetchall()
 
-    # Structure des matières organisées par niveau et semestre
+    # Structure des données avec validation
     structured_data = {
         'L1': {'S1': [], 'S2': []},
         'L2': {'S3': [], 'S4': []},
-        'L3': {'S5': []}  # Pas de S6
+        'L3': {'S5': []}
     }
 
-    for matiere in matieres:
-        # Identifier la partie lettre (département) et chiffres (code)
-        dept = ''.join(filter(str.isalpha, matiere))  # Ex: "GCGP", "GEER", "ST"
-        code = ''.join(filter(str.isdigit, matiere))  # Ex: "11", "31", "41"
+    valid_semestres = {
+        'L1': {'S1', 'S2'},
+        'L2': {'S3', 'S4'},
+        'L3': {'S5'}
+    }
 
-        if len(code) < 2:
-            continue  # Évite les erreurs si le code est mal formé
+    for row in matieres_data:
+        code_mat, dept_mat, niveau, semestre = row
 
-        semestre_num = int(code[0])  # Ex: 1 → S1, 3 → S3
-        semestre = f'S{semestre_num}'
-        niveau = f'L{(semestre_num + 1) // 2}'  # Ex: S1, S2 → L1 | S3, S4 → L2
+        # Validation des données
+        if niveau not in valid_semestres:
+            continue
+        if semestre not in valid_semestres[niveau]:
+            continue
 
-        if niveau in structured_data and semestre in structured_data[niveau]:
-            structured_data[niveau][semestre].append({
-                'code': matiere,
-                'dept': dept,
-                'numero': code[1]  # Deuxième chiffre pour différencier les matières
+        # Extraction du numéro de matière depuis code_mat
+        try:
+            _, code_part = code_mat.split('_')
+            numero = code_part[1] if len(code_part) > 1 else '0'
+        except (ValueError, IndexError):
+            numero = '0'
+
+        structured_data[niveau][semestre].append({
+            'code': code_mat,
+            'dept': dept_mat,
+            'numero': numero
+        })
+        # Ajout de la récupération des configurations actives
+        cursor.execute("""
+            SELECT id, niveau, code_mat, date_fermeture 
+            FROM configuration_reclamation 
+            WHERE date_fermeture > %s
+        """, (datetime.now(timezone.utc),))
+
+        active_configs = []
+        for row in cursor.fetchall():
+            active_configs.append({
+                'id': row[0],
+                'niveau': row[1],
+                'matieres': row[2].split(','),
+                'date_fermeture': row[3]
             })
+    return render_template('parametres_admin.html',
+                           matieres=structured_data,
+                           user_A=user_A,
+                           active_configs=active_configs)
 
-    return render_template('parametres_admin.html', matieres=structured_data, user_A=user_A)
 
+@app.template_filter('time_remaining')
+def time_remaining_filter(dt):
+    now = datetime.now(timezone.utc)
+    diff = dt - now
+    if diff.total_seconds() <= 0:
+        return "Expiré"
 
-
+    hours = diff.seconds // 3600
+    minutes = (diff.seconds % 3600) // 60
+    return f"{hours}h {minutes}m restantes"
 @app.route('/change_password', methods=['POST'])
 def change_password():
     if not session.get('logged_in'):
@@ -387,7 +508,9 @@ def change_password():
 
 @app.route('/logout')
 def logout():
-    session.pop('username', None)  # Supprime la session
-    return redirect(url_for('login'))  # Redirige vers l'accueil
+    # Supprime toutes les données de session
+    session.clear()
+    return redirect(url_for('login'))
+
 if __name__ == '__main__':
     app.run(debug=True)

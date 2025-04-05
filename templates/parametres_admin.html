@@ -211,6 +211,10 @@
         <a href="#parametres" class="sidebar-link active" onclick="showSection('parametres')">
           <i class="fas fa-cog me-2"></i>Paramètres des réclamations
         </a>
+
+        <a href="#reclamations-actives" class="sidebar-link" onclick="showSection('reclamations-actives'); loadActiveReclamations()">
+         <i class="fas fa-clock me-2"></i>Réclamations Actives
+        </a>
         <a href="#informations" class="sidebar-link" onclick="showSection('informations')">
           <i class="fas fa-user-cog me-2"></i>Informations personnelles
         </a>
@@ -266,7 +270,7 @@
 
           {% for niveau, semestres in matieres.items() %}
           <!-- Niveau {{ niveau }} -->
-          <div class="niveau-config" id="niveau-{{ niveau }}">
+          <div class="niveau-config" id="niveau-{{ niveau }}" data-niveau="{{ niveau }}">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5>Licence {{ niveau[-1] }}</h5>
               <div class="form-check form-switch">
@@ -382,10 +386,39 @@
           </form>
         </div>
       </div>
+
+      <!-- Nouvelle section dans le contenu principal -->
+<div id="reclamations-actives" class="config-section" style="display: none;">
+  <div class="config-card">
+    <h4 class="mb-4"><i class="fas fa-clock me-2"></i>Réclamations Actives</h4>
+
+    <div class="table-responsive">
+      <table class="table table-hover align-middle">
+        <thead class="table-light">
+          <tr>
+            <th>Niveau</th>
+            <th>Matières</th>
+            <th>Temps Restant</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="active-reclamations-list">
+          <!-- Les données seront injectées par JavaScript -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="alert alert-warning mt-3" id="no-active-reclamations" style="display: none;">
+      <i class="fas fa-info-circle me-2"></i>Aucune réclamation active pour le moment
+    </div>
+  </div>
+</div>
     </main>
   </div>
 
   <script>
+
+
   // Helper pour vérifier la visibilité d'un élément et de ses parents
 const isElementVisible = (element) => {
   if (!element) return true
@@ -395,29 +428,17 @@ const isElementVisible = (element) => {
 // Objectif : Sauvegarder toutes les configurations des niveaux en validant les données avant envoi au serveur
     // Fonction pour sauvegarder toutes les configurations des niveaux
 async function saveAllConfigs() {
-  const groupedConfigs = {}; // Stockage groupé par niveau+date
+  const groupedConfigs = {};
   const errors = [];
   const now = new Date();
 
   // Parcours des configurations par niveau
-  document.querySelectorAll('[data-niveau]').forEach(niveauDiv => {
-     const niveau = niveauDiv.dataset.niveau; // L1, L2, L3
+  document.querySelectorAll('.niveau-config[data-niveau]').forEach(niveauDiv => {
+    const niveau = niveauDiv.dataset.niveau;
     const niveauSwitch = document.getElementById(`activate${niveau}`);
 
     // Ignorer les niveaux désactivés
     if (!niveauSwitch.checked) return;
-
-    // Validation de la date
-    const closeDateInput = document.getElementById(`closeDate${niveau}`);
-    const closeDate = new Date(closeDateInput.value);
-
-    if (!closeDateInput.value) {
-      errors.push(`Date manquante pour ${niveau}`);
-      return;
-    }
-    if (closeDate < now) {
-      errors.push(`La date de fermeture pour ${niveau} est dans le passé`);
-    }
 
     // Récupération des matières cochées ET visibles
     const matieres = [];
@@ -428,30 +449,37 @@ async function saveAllConfigs() {
       }
     });
 
+    // Si aucune matière sélectionnée, on ignore le niveau
+    if (matieres.length === 0) return;
+
+    // Validation de la date SEULEMENT si des matières sont sélectionnées
+    const closeDateInput = document.getElementById(`closeDate${niveau}`);
+    if (!closeDateInput.value) {
+      errors.push(`Date manquante pour ${niveau}`);
+      return;
+    }
+
+    const closeDate = new Date(closeDateInput.value);
+    if (closeDate < now) {
+      errors.push(`La date de fermeture pour ${niveau} est dans le passé`);
+    }
+
     // Clé unique pour grouper par niveau+date
     const configKey = `${niveau}_${closeDateInput.value}`;
 
     if (groupedConfigs[configKey]) {
-      // Fusion des matières existantes et nouvelles
-      groupedConfigs[configKey].matieres = [...new Set([
-        ...groupedConfigs[configKey].matieres,
-        ...matieres
-      ])];
+      groupedConfigs[configKey].matieres = [...new Set([...groupedConfigs[configKey].matieres, ...matieres])];
     } else {
-      // Nouvelle configuration
       groupedConfigs[configKey] = {
         niveau: niveau,
         matieres: matieres,
-        date_fermeture: closeDateInput.value // Format YYYY-MM-DD
+        date_fermeture: closeDateInput.value
       };
     }
   });
 
-  // Gestion des erreurs
   if (errors.length > 0) return alert("Erreurs :\n" + errors.join("\n"));
-
-  const configsArray = Object.values(groupedConfigs);
-  if (configsArray.length === 0) return alert("Aucune configuration valide !");
+  if (Object.keys(groupedConfigs).length === 0) return alert("Aucune configuration valide !");
 
   try {
     const response = await fetch('/save-config', {
@@ -460,21 +488,18 @@ async function saveAllConfigs() {
         'Content-Type': 'application/json',
         'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
       },
-      body: JSON.stringify(configsArray)
+      body: JSON.stringify(Object.values(groupedConfigs))
     });
 
     const data = await response.json();
+    if (!response.ok) throw new Error(data.error || "Erreur serveur");
 
-    if (!response.ok) {
-      throw new Error(data.error || "Erreur serveur inconnue");
-    }
-
-    alert("Configuration sauvegardée avec succès !");
+    alert("Configuration sauvegardée !");
     window.location.reload();
 
   } catch (error) {
-    console.error("Erreur détaillée:", error);
-    alert(`Échec de la sauvegarde : ${error.message}`);
+    console.error("Erreur:", error);
+    alert(`Échec: ${error.message}`);
   }
 }
 
