@@ -6,13 +6,108 @@
     <title>Paramètres</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+
+
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    .admin-gradient {
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+    .status-chip {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      width: fit-content;
+    }
+    .scrollable-admin {
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
+    }
+    /* Bouton d'action individuel */
+    .btn-action-trigger {
+      background: rgba(0,0,0,0.05);
+      border: 1px solid rgba(0,0,0,0.1);
+      padding: 0.25rem 0.75rem;
+      transition: all 0.3s ease;
+    }
+    .btn-action-trigger:hover {
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    /* Panneau d'action pour chaque ligne */
+    .action-panel {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      width: 220px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      z-index: 1050;
+    }
+    .action-panel.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .action-header {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .action-body {
+      padding: 0.5rem 0;
+    }
+    .action-item {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .action-item:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    /* Styles pour le menu global Outils */
+    .dropdown-menu {
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    .dropdown-item {
+      padding: 0.5rem 1rem;
+      transition: background 0.2s;
+    }
+    .dropdown-item:hover {
+      background: #f8f9fa;
+    }
+  </style>
 </head>
-<body>
-{% extends "base.html" %}
-
-{% block title %}Sécurité{% endblock %}
-
-{% block content %}
+<body class="d-flex flex-column h-100 bg-light">
+        <!-- En-tête -->
+        <header class="admin-gradient text-white p-3 shadow">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="h4 mb-0">
+          <i class="fas fa-file-contract me-2"></i>ISME
+        </h1>
+        <small class="text-white-50 opacity-75">Gestion avancée des réclamations étudiantes</small>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <!-- Bouton Déconnexion -->
+        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
+          <i class="fas fa-sign-out-alt me-1"></i>
+          <span class="d-none d-md-inline">Déconnexion</span>
+        </a>
+      </div>
+    </div>
+  </header>
     <div class="container mt-5">
 
         <!-- Section Sécurité -->
@@ -37,6 +132,5 @@
         <!-- Bouton Retour -->
         <a href="{{ url_for('suivi_reclamations_etud') }}" class="btn btn-secondary">Retour</a>
     </div>
-{% endblock %}
 </body>
 </html>

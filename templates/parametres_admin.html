@@ -8,6 +8,81 @@
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
+.btn-hover-primary:hover {
+    background-color: var(--bs-primary);
+    color: white !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+}
+
+.transition-all {
+    transition: all 0.3s ease;
+}
+    /* Ajouter ce style CSS */
+.global-save-container {
+  position: fixed;
+  bottom: 2rem;
+  right: 2rem;
+  display: flex;
+  gap: 1rem;
+  z-index: 1000;
+}
+
+.global-action-btn {
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  padding: 0.75rem 1.5rem;
+  border-radius: 50px;
+  display: inline-flex;
+  align-items: center;
+}
+
+@media (max-width: 768px) {
+  .global-save-container {
+    bottom: 1rem;
+    right: 1rem;
+    flex-direction: column;
+    align-items: flex-end;
+  }
+
+  .global-action-btn {
+    padding: 0.6rem 1.2rem;
+    font-size: 0.9rem;
+  }
+}
+    /* Ajouts CSS */
+.table-config {
+  border-collapse: separate;
+  border-spacing: 0 0.75rem;
+}
+
+.table-config tbody tr {
+  background: white;
+  transition: all 0.2s ease;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+
+.table-config tbody td:first-child {
+  border-radius: 8px 0 0 8px;
+}
+
+.table-config tbody td:last-child {
+  border-radius: 0 8px 8px 0;
+}
+
+.badge-matieres {
+  padding: 0.5rem 0.75rem;
+  font-size: 0.85em;
+  letter-spacing: 0.05em;
+}
+    /* Add to existing styles */
+.table-hover tbody tr:hover {
+  background-color: #f8fafd;
+}
+
+.badge.bg-primary-subtle {
+  border: 1px solid #0d6efd30;
+}
     /* Styles généraux */
     body {
       font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
@@ -184,23 +259,18 @@
         </h1>
         <small class="text-white-50 opacity-75">Configuration du système de réclamations</small>
       </div>
-      <div class="d-flex gap-2 align-items-center">
-        <div class="dropdown">
-          <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            <i class="fas fa-sliders-h me-1"></i>
-            <span class="d-none d-md-inline">Outils</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end shadow">
-            <li><a class="dropdown-item" href="{{ url_for('admin_dashboard') }}"><i class="fas fa-home me-2"></i>Tableau de bord</a></li>
-            <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item" href="#"><i class="fas fa-download me-2"></i>Exporter configuration</a></li>
-          </ul>
-        </div>
-        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
-          <i class="fas fa-sign-out-alt me-1"></i>
-          <span class="d-none d-md-inline">Déconnexion</span>
-        </a>
-      </div>
+      <!-- Modified header section -->
+<div class="d-flex gap-2 align-items-center">
+    <a href="{{ url_for('admin_dashboard') }}"
+   class="btn btn-light btn-hover-primary btn-sm rounded-pill shadow-sm px-3 py-2 d-flex align-items-center transition-all">
+    <i class="fas fa-home me-2 fs-6"></i>
+    <span class="d-none d-md-inline fw-medium">Aceille</span>
+</a>
+    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
+        <i class="fas fa-sign-out-alt me-1"></i>
+        <span class="d-none d-md-inline">Déconnexion</span>
+    </a>
+</div>
     </div>
   </header>
 
@@ -211,8 +281,8 @@
         <a href="#parametres" class="sidebar-link active" onclick="showSection('parametres')">
           <i class="fas fa-cog me-2"></i>Paramètres des réclamations
         </a>
-
-        <a href="#reclamations-actives" class="sidebar-link" onclick="showSection('reclamations-actives'); loadActiveReclamations()">
+      <!-- In the sidebar menu -->
+       <a href="#reclamations-actives" class="sidebar-link" onclick="showSection('reclamations-actives')">
          <i class="fas fa-clock me-2"></i>Réclamations Actives
         </a>
         <a href="#informations" class="sidebar-link" onclick="showSection('informations')">
@@ -267,14 +337,14 @@
               <label class="form-check-label" for="activateAll"></label>
             </div>
           </div>
-
+        {% if matieres is defined %}
           {% for niveau, semestres in matieres.items() %}
           <!-- Niveau {{ niveau }} -->
           <div class="niveau-config" id="niveau-{{ niveau }}" data-niveau="{{ niveau }}">
             <div class="d-flex justify-content-between align-items-center mb-3">
               <h5>Licence {{ niveau[-1] }}</h5>
               <div class="form-check form-switch">
-                <input class="form-check-input niveau-switch" type="checkbox" id="activate{{ niveau }}" data-niveau="{{ niveau }}">
+                <input class="form-check-input niveau-switch" type="checkbox" id="activate{{ niveau }}" data-niveau="{{ niveau }}"{% if editing_config and editing_config.niveau == niveau %}checked{% endif %}>
 
               </div>
             </div>
@@ -307,7 +377,7 @@
                            name="matieres"
                            value="{{ matiere.code }}"
                            data-semestre="{{ semestre }}"
-                           data-niveau="{{ niveau }}">
+                           data-niveau="{{ niveau }}"{% if editing_config and matiere.code in editing_config.matieres %}checked{% endif %}>
                     <label class="form-check-label" for="matiere_{{ matiere.code }}">
                       <strong>{{ matiere.code }}</strong> -
                       <span class="text-muted">Matière {{ matiere.numero }} ({{ matiere.dept }})</span>
@@ -321,21 +391,36 @@
 
             <!-- Dates d'ouverture/fermeture -->
             <div class="row g-3 mt-3">
-
               <div class="col-md-6">
                 <label class="form-label">Date de fermeture</label>
-                <input type="date" class="form-control date-input" id="closeDate{{ niveau }}" required>
+                <input type="datetime-local" class="form-control date-input"
+                       id="closeDate{{ niveau }}" required
+                       min="{{ datetime.now().strftime('%Y-%m-%dT%H:%M') }}"{% if editing_config and editing_config.niveau == niveau %}value="{{ editing_config.date_fermeture }}"{% endif %}>
+                <small class="text-muted">Doit être au moins 10 minutes dans le futur</small>
               </div>
             </div>
 
+
             <!-- Bouton de validation -->
             <div class="d-flex justify-content-end mt-3">
-              <button class="btn btn-primary global-save-btn" onclick="saveAllConfigs()">
-          <i class="fas fa-save me-2"></i>Enregistrer
-        </button>
+              {% if editing_config %}
+<div class="global-save-container">
+  <button class="btn btn-primary global-action-btn" onclick="saveEditedConfig()">
+    <i class="fas fa-save me-2"></i>Enregistrer les modifications
+  </button>
+  <a href="{{ url_for('parametres_admin') }}#reclamations-active" class="btn btn-secondary global-action-btn" >
+    <i class="fas fa-times me-2"></i>Annuler
+  </a>
+</div>
+{% else %}
+<button class="btn btn-primary global-action-btn" onclick="saveAllConfigs()">
+  <i class="fas fa-save me-2"></i>Enregistrer
+</button>
+{% endif %}
       </div>
           </div>
           {% endfor %}
+          {% endif %}
         </div>
       </div>
 
@@ -387,37 +472,173 @@
         </div>
       </div>
 
-      <!-- Nouvelle section dans le contenu principal -->
-<div id="reclamations-actives" class="config-section" style="display: none;">
-  <div class="config-card">
-    <h4 class="mb-4"><i class="fas fa-clock me-2"></i>Réclamations Actives</h4>
+        <!-- New section for active claims -->
+ <div id="reclamations-actives" class="config-section" style="display: none;">
+    <div class="config-card">
+      <h4 class="mb-4"><i class="fas fa-list-alt me-2"></i>Réclamations Actives</h4>
+      <div class="table-responsive">
+        <table class="table table-hover align-middle">
+          <thead class="table-light">
+            <tr>
+              <th>Niveau</th>
+              <th>Matières</th>
+              <th>Temps Restant</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for config in active_configs %}
+            <tr>
+              <td class="fw-bold">L{{ config.niveau[-1] }}</td>
+              <td>
+                <div class="d-flex flex-wrap gap-2">
+                  {% for matiere in config.matieres %}
+                  <span class="badge bg-primary-subtle text-primary">{{ matiere }}</span>
+                  {% endfor %}
+                </div>
+              </td>
+              <td>
+              <span class="countdown-timer"
+                  data-end="{{ config.date_fermeture.isoformat() }}"
+                  data-config-id="{{ config.id }}">
+              {{ config.date_fermeture|time_remaining }}
+              </span>
+             </td>
+              <td class="pe-4 text-end">
+  <div class="d-flex gap-2 justify-content-end">
+    <!-- Bouton Modifier -->
+    <a href="{{ url_for('parametres_admin', edit_id=config.id) }}#parametres"
+       class="btn btn-primary btn-sm px-3 py-2">
+      <i class="fas fa-edit me-2"></i>Modifier
+    </a>
 
-    <div class="table-responsive">
-      <table class="table table-hover align-middle">
-        <thead class="table-light">
-          <tr>
-            <th>Niveau</th>
-            <th>Matières</th>
-            <th>Temps Restant</th>
-            <th>Actions</th>
-          </tr>
-        </thead>
-        <tbody id="active-reclamations-list">
-          <!-- Les données seront injectées par JavaScript -->
-        </tbody>
-      </table>
-    </div>
-
-    <div class="alert alert-warning mt-3" id="no-active-reclamations" style="display: none;">
-      <i class="fas fa-info-circle me-2"></i>Aucune réclamation active pour le moment
+    <!-- Formulaire Supprimer -->
+    <form method="POST" action="{{ url_for('delete_config', id=config.id) }}"
+          onsubmit="return confirm('Voulez-vous vraiment supprimer cette configuration ?');">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+      <button type="submit" class="btn btn-danger btn-sm px-3 py-2">
+        <i class="fas fa-trash-alt me-2"></i>Supprimer
+      </button>
+    </form>
+  </div>
+</td>
+            </tr>
+            {% else %}
+            <tr>
+              <td colspan="4" class="text-center text-muted py-5">
+                <i class="fas fa-inbox fa-2x mb-3"></i><br>Aucune configuration active
+              </td>
+            </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
     </div>
   </div>
-</div>
     </main>
   </div>
 
+
   <script>
 
+    function saveEditedConfig() {
+  // Récupérer l'élément racine du niveau édité
+  const niveauDiv = document.querySelector(`.niveau-config[data-niveau="${editingNiveau}"]`);
+
+  // Récupérer toutes les matières cochées (même masquées)
+  const matieres = Array.from(niveauDiv.querySelectorAll('.matiere-checkbox:checked'))
+                       .map(checkbox => checkbox.value);
+
+  // Récupérer la date
+  const dateInput = document.getElementById(`closeDate${editingNiveau}`);
+
+  // Validation
+  if (matieres.length === 0) {
+    alert("Veuillez sélectionner au moins une matière !");
+    return;
+  }
+
+  if (!dateInput.value) {
+    alert("La date de fermeture est obligatoire !");
+    return;
+  }
+
+  // Préparation des données
+  const configData = {
+    id: editingConfigId,
+    niveau: editingNiveau,
+    matieres: matieres,
+    date_fermeture: dateInput.value
+  };
+
+  // Envoi AJAX
+  fetch('/save-config', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
+    },
+    body: JSON.stringify([configData])
+  })
+  .then(response => {
+    if (!response.ok) throw new Error('Erreur réseau');
+    return response.json();
+  })
+  .then(data => {
+    if (data.status === "success") {
+      window.location.href = "{{ url_for('parametres_admin') }}#reclamations-actives";
+    } else {
+      alert("Erreur : " + (data.message || "Échec de la sauvegarde"));
+    }
+  })
+  .catch(error => {
+    console.error('Error:', error);
+    alert("Échec de la communication avec le serveur");
+  });
+}
+// Update showSection() function to handle new section
+function showSection(sectionId) {
+  document.querySelectorAll('.config-section').forEach(section => {
+    section.style.display = 'none';
+  });
+  document.getElementById(sectionId).style.display = 'block';
+
+  document.querySelectorAll('.sidebar-link').forEach(link => {
+    link.classList.remove('active');
+  });
+  event.currentTarget.classList.add('active');
+
+  // Refresh time display for active claims
+  if(sectionId === 'reclamations-actives') {
+    refreshTimeDisplays();
+  }
+}
+
+// Auto-refresh time remaining every minute
+function refreshTimeDisplays() {
+  document.querySelectorAll('[data-time]').forEach(el => {
+    const endTime = new Date(el.dataset.time);
+    el.textContent = formatTimeRemaining(endTime);
+  });
+}
+
+function formatTimeRemaining(endTime) {
+  const now = new Date();
+  const diff = endTime - now;
+
+  if (diff <= 0) return 'Expiré';
+
+  const hours = Math.floor(diff / 3600000);
+  const minutes = Math.floor((diff % 3600000) / 60000);
+  return `${hours}h ${minutes}m`;
+}
+
+// Update every minute
+setInterval(() => {
+  if(document.getElementById('reclamations-actives').style.display === 'block') {
+    refreshTimeDisplays();
+  }
+}, 60000);
 
   // Helper pour vérifier la visibilité d'un élément et de ses parents
 const isElementVisible = (element) => {
@@ -787,8 +1008,106 @@ document.querySelectorAll('.matiere-checkbox').forEach(checkbox => {
         `.matiere-checkbox[data-semestre="${semestre}"][data-niveau="${niveau}"]`
       )].some(cb => cb.checked);
   });
-});
+   // Nouvelle fonction pour les infos de durée
+    function updateDurationInfo(niveau) {
+      fetch(`/last-duration/${niveau}`)
+        .then(response => response.json())
+        .then(data => {
+          const infoElement = document.getElementById(`duration-info-${niveau}`);
+          if (data.days !== undefined) {
+            infoElement.innerHTML = `
+              <span class="text-warning">
+                <i class="fas fa-info-circle"></i>
+                Durée précédente : ${data.days} jours ${data.hours} heures
+              </span>`;
+          } else {
+            infoElement.textContent = '';
+          }
+        });
+    }
+        // Nouvelle fonction de compte à rebours
+    function updateCountdownTimers() {
+      document.querySelectorAll('.countdown-timer').forEach(timer => {
+        const endTime = new Date(timer.dataset.end);
+        const now = new Date();
+        const diff = endTime - now;
 
+        if (diff <= 0) {
+          timer.textContent = 'EXPIRÉ';
+          timer.classList.remove('text-success');
+          timer.classList.add('text-danger');
+          return;
+        }
+
+        const hours = Math.floor(diff / 3600000);
+        const minutes = Math.floor((diff % 3600000) / 60000);
+        const seconds = Math.floor((diff % 60000) / 1000);
+
+        timer.innerHTML = `
+          <span class="text-success">
+            ${hours.toString().padStart(2, '0')}h
+            ${minutes.toString().padStart(2, '0')}m
+            ${seconds.toString().padStart(2, '0')}s
+          </span>
+        `;
+      });
+    }
+
+    // Actualisation toutes les secondes
+    setInterval(updateCountdownTimers, 1000);
+    updateCountdownTimers(); // Initialisation immédiate
+
+    // Modification de showSection pour gérer l'actualisation
+    function showSection(sectionId) {
+      document.querySelectorAll('.config-section').forEach(section => {
+        section.style.display = 'none';
+      });
+      document.getElementById(sectionId).style.display = 'block';
+
+      document.querySelectorAll('.sidebar-link').forEach(link => {
+        link.classList.remove('active');
+      });
+      event.currentTarget.classList.add('active');
+
+      // Forcer une actualisation immédiate quand on affiche la section
+      if(sectionId === 'reclamations-actives') {
+        updateCountdownTimers();
+      }
+    }
+
+});
+// Ajouter ce code dans la section <script>
+window.addEventListener('load', function() {
+    const hash = window.location.hash;
+    if (hash) {
+        const sectionId = hash.substring(1);
+        if (sectionId === 'reclamations-actives') {
+            showSection(sectionId);
+            document.querySelector(`a[href="${hash}"]`).classList.add('active');
+            document.getElementById(sectionId).scrollIntoView({ behavior: 'smooth' });
+        }
+    }
+});
   </script>
+{% if editing_config %}
+<script>
+  var editingConfigId = {{ editing_config.id }};
+  var editingNiveau = "{{ editing_config.niveau }}";
+
+  // Forcer l'affichage de tous les éléments lors de l'édition
+  document.addEventListener('DOMContentLoaded', function() {
+    // Désactiver les filtres
+    document.querySelector('.semestre-filter[data-semestre="all"]').click();
+    document.querySelector('.dept-filter[data-dept="all"]').click();
+
+    // Activer le niveau édité
+    const niveauSwitch = document.getElementById(`activate{{ editing_config.niveau }}`);
+    if (niveauSwitch) {
+      niveauSwitch.checked = true;
+      updateMatiereCheckboxesState("{{ editing_config.niveau }}");
+    }
+  });
+</script>
+{% endif %}
 </body>
 </html>

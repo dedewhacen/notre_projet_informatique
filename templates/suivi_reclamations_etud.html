@@ -34,32 +34,118 @@
                 display: none;
             }
         }
+
+        .admin-gradient {
+      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+      border-bottom: 2px solid rgba(255,255,255,0.1);
+    }
+    .status-chip {
+      padding: 0.3rem 0.8rem;
+      border-radius: 20px;
+      font-size: 0.85rem;
+      width: fit-content;
+    }
+    .scrollable-admin {
+      max-height: calc(100vh - 280px);
+      overflow-y: auto;
+    }
+    /* Bouton d'action individuel */
+    .btn-action-trigger {
+      background: rgba(0,0,0,0.05);
+      border: 1px solid rgba(0,0,0,0.1);
+      padding: 0.25rem 0.75rem;
+      transition: all 0.3s ease;
+    }
+    .btn-action-trigger:hover {
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    /* Panneau d'action pour chaque ligne */
+    .action-panel {
+      position: absolute;
+      right: 0;
+      top: 100%;
+      width: 220px;
+      background: white;
+      border-radius: 8px;
+      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+      opacity: 0;
+      visibility: hidden;
+      transform: translateY(10px);
+      transition: all 0.3s ease;
+      z-index: 1050;
+    }
+    .action-panel.show {
+      opacity: 1;
+      visibility: visible;
+      transform: translateY(0);
+    }
+    .action-header {
+      padding: 0.5rem 1rem;
+      border-bottom: 1px solid rgba(0,0,0,0.1);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .action-body {
+      padding: 0.5rem 0;
+    }
+    .action-item {
+      padding: 0.5rem 1rem;
+      cursor: pointer;
+      transition: background 0.2s;
+    }
+    .action-item:hover {
+      background: rgba(0,0,0,0.05);
+    }
+    /* Styles pour le menu global Outils */
+    .dropdown-menu {
+      border: 1px solid rgba(0,0,0,0.1);
+      border-radius: 8px;
+    }
+    .dropdown-item {
+      padding: 0.5rem 1rem;
+      transition: background 0.2s;
+    }
+    .dropdown-item:hover {
+      background: #f8f9fa;
+    }
     </style>
 </head>
-<body class="d-flex flex-column h-100 bg-light" style="margin: 0; overflow: hidden;">
-    <div class="main-card shadow-lg">
+<body class="d-flex flex-column h-100 bg-light">
         <!-- En-tête -->
-        <div class="header-bg text-white p-3 rounded-top">
-            <div class="d-flex justify-content-between align-items-center">
-                <h1 class="h4 mb-0">
-                    <i class="fas fa-file-contract me-2"></i>Suivi des Réclamations
-                </h1>
-                <div class="d-flex gap-2">
-                    <a href="/" class="btn btn-light btn-sm">
-                        <i class="fas fa-home"></i>
-                        <span class="d-none d-md-inline">Accueil</span>
-                    </a>
-                    <a href="/parametres" class="btn btn-light btn-sm">
-                        <i class="fas fa-cog"></i>
-                        <span class="d-none d-md-inline">Paramètres</span>
-                    </a>
-                    <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
-                        <i class="fas fa-sign-out-alt"></i>
-                        <span class="d-none d-md-inline">Déconnexion</span>
-                    </a>
-                </div>
-            </div>
+        <header class="admin-gradient text-white p-3 shadow">
+    <div class="d-flex justify-content-between align-items-center">
+      <div>
+        <h1 class="h4 mb-0">
+          <i class="fas fa-file-contract me-2"></i>ISME
+        </h1>
+        <small class="text-white-50 opacity-75">Gestion avancée des réclamations étudiantes</small>
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <!-- Menu global Outils -->
+        <div class="dropdown">
+          <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+            <i class="fas fa-sliders-h me-1"></i>
+            <span class="d-none d-md-inline">Outils</span>
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li>
+              <a class="dropdown-item d-flex align-items-center" href="{{ url_for('parametres') }}">
+             <i class="fas fa-cog text-primary me-2"></i> Paramètres
+             </a>
+
+            </li>
+          </ul>
         </div>
+        <!-- Bouton Déconnexion -->
+        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
+          <i class="fas fa-sign-out-alt me-1"></i>
+          <span class="d-none d-md-inline">Déconnexion</span>
+        </a>
+      </div>
+    </div>
+  </header>
 
         <!-- Contenu principal -->
         <div class="h-100 d-flex flex-column">
@@ -129,15 +215,6 @@
                 </div>
             </div>
 
-            <!-- Légende -->
-            <div class="p-3 border-top bg-light mt-auto">
-                <div class="d-flex flex-wrap align-items-center gap-3">
-                    <span class="text-muted">Légende :</span>
-                    <span class="status-badge bg-warning text-dark"><i class="fas fa-paper-plane"></i> Soumise</span>
-                    <span class="status-badge bg-info text-white"><i class="fas fa-spinner"></i> En traitement</span>
-                    <span class="status-badge bg-success text-white"><i class="fas fa-check-circle"></i> Résolue</span>
-                </div>
-            </div>
         </div>
     </div>
 

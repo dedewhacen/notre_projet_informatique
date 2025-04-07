@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify
+from flask import Flask, render_template, redirect, url_for, request, session, flash, jsonify,abort
 import mysql.connector
 from datetime import datetime, timezone, timedelta
 from flask_wtf.csrf import CSRFProtect
@@ -250,6 +250,7 @@ def etudiant():
 
 
 # Modification de la route /save-config
+# Route pour sauvegarder les configurations
 @app.route('/save-config', methods=['POST'])
 def save_config():
     if not session.get('logged_in') or session.get('role') != 'admin':
@@ -257,95 +258,154 @@ def save_config():
 
     try:
         configs = request.get_json()
-        if not isinstance(configs, list):
-            return jsonify(error="Format de données invalide"), 400
-
+        print("Données reçues:", configs)  # Debug
         current_time = datetime.now(timezone.utc)
+        errors = []
+        saved_configs = []
 
         for config in configs:
+            # Extraction des paramètres avec vérification
+            config_id = config.get('id')
             niveau = config.get('niveau')
-            matieres = config.get('matieres')
+            matieres = config.get('matieres', [])
             date_fermeture_str = config.get('date_fermeture')
 
-            # Validation de la date
+
+
+            # Validation basique
+            if not niveau or not matieres or not date_fermeture_str:
+                errors.append("Champs manquants dans la configuration")
+                continue
+
+            # Conversion de la date
             try:
-                date_fermeture = datetime.fromisoformat(date_fermeture_str).astimezone(timezone.utc)
-                min_time = datetime.now(timezone.utc) + timedelta(minutes=10)
+                new_close_date = datetime.fromisoformat(date_fermeture_str.replace('Z', '+00:00')).astimezone(
+                    timezone.utc)
+            except ValueError:
+                try:
+                    # Fallback pour les dates sans timezone
+                    new_close_date = datetime.fromisoformat(date_fermeture_str).replace(tzinfo=timezone.utc)
+                except ValueError:
+                    errors.append(f"Format de date invalide pour {niveau}")
+                    continue
 
-                if date_fermeture < min_time:
-                    return jsonify(error=f"La date doit être au moins 10 minutes dans le futur ({niveau})"), 400
+            # Vérification durée minimale
+            if new_close_date < current_time + timedelta(minutes=10):
+                errors.append(f"Date trop proche pour {niveau} (min. 10 minutes)")
+                continue
 
-            except (ValueError, TypeError) as e:
-                return jsonify(error=f"Format de date invalide ({niveau})"), 400
-
-            # Vérifier existence configuration
+            # Vérification durée précédente
             cursor.execute("""
-                SELECT id, code_mat 
+                SELECT date_fermeture 
                 FROM configuration_reclamation 
-                WHERE niveau = %s AND date_fermeture = %s
-            """, (niveau, date_fermeture))
-            existing = cursor.fetchone()
+                WHERE niveau = %s
+                AND (%s IS NULL OR id != %s)
+                ORDER BY date_fermeture DESC 
+                LIMIT 1
+            """, (niveau, config_id, config_id))
 
-            if existing:
-                anciennes = existing[1].split(',') if existing[1] else []
-                nouvelles = list(set(anciennes + matieres))
+            last_config = cursor.fetchone()
+            if last_config:
+                last_close_date = last_config[0]
+                if new_close_date >= last_close_date:
+                    remaining_time = last_close_date - current_time
+                    errors.append(
+                        f"Durée pour {niveau} doit être plus courte que précédente "
+                        f"({remaining_time.days} jours {remaining_time.seconds // 3600} heures)"
+                    )
+                    continue
+
+            # Construction de la requête SQL
+            if config_id:
+                print(f"Mise à jour configuration {config_id}")  # D
+                # Mode mise à jour
                 cursor.execute("""
-                    UPDATE configuration_reclamation 
-                    SET code_mat = %s 
-                    WHERE id = %s
-                """, (','.join(nouvelles), existing[0]))
+                            UPDATE configuration_reclamation 
+                            SET niveau = %s,
+                                code_mat = %s,
+                                date_fermeture = %s
+                            WHERE id = %s
+                        """, (niveau, ','.join(matieres), new_close_date, config_id))
+                action = "updated"
             else:
+                print("Nouvelle configuration")
+                # Nouvelle configuration
                 cursor.execute("""
                     INSERT INTO configuration_reclamation 
                     (niveau, code_mat, date_fermeture)
                     VALUES (%s, %s, %s)
-                """, (niveau, ','.join(matieres), date_fermeture))
+                """, (niveau, ','.join(matieres), new_close_date))
+                config_id = cursor.lastrowid
+                action = "created"
+
+            saved_configs.append({"id": config_id, "action": action})
+
+        if errors:
+            conn.rollback()
+            return jsonify({"status": "error", "errors": errors}), 400
 
         conn.commit()
-        return jsonify(success=True)
+        return jsonify({
+            "status": "success",
+            "message": f"{len(saved_configs)} configuration(s) sauvegardée(s)",
+            "configs": saved_configs
+        })
 
     except Exception as e:
         conn.rollback()
-        return jsonify(error=f"Erreur : {str(e)}"), 500
+        app.logger.error(f"Erreur sauvegarde configuration: {str(e)}")
+        return jsonify({
+            "status": "error",
+            "message": "Erreur serveur",
+            "debug": str(e)
+        }), 500
 
 
-# Nouvelle route pour les réclamations actives
-@app.route('/active-configs')
-def get_active_configs():
-    if not session.get('logged_in') or session.get('role') != 'admin':
-        return jsonify(error="Accès non autorisé"), 403
-
-    cursor.execute("""
-        SELECT id, niveau, code_mat, date_fermeture 
-        FROM configuration_reclamation 
-        WHERE date_fermeture > %s
-    """, (datetime.now(timezone.utc),))
-
-    configs = []
-    for row in cursor.fetchall():
-        configs.append({
-            'id': row[0],
-            'niveau': row[1],
-            'matieres': row[2].split(','),
-            'date_fermeture': row[3].isoformat()
-        })
-
-    return jsonify(configs)
-
-
-# Route pour suppression manuelle
-@app.route('/delete-config/<int:id>', methods=['DELETE'])
+# Route pour supprimer une configuration
+@app.route('/delete-config/<int:id>', methods=['POST'])
 def delete_config(id):
     if not session.get('logged_in') or session.get('role') != 'admin':
-        return jsonify(error="Accès non autorisé"), 403
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(error="Accès non autorisé"), 403
+        flash("Accès non autorisé", "danger")
+        return redirect(url_for('login'))
 
     try:
         cursor.execute("DELETE FROM configuration_reclamation WHERE id = %s", (id,))
         conn.commit()
-        return jsonify(success=True)
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(success=True)
+        else:
+            flash("Configuration supprimée", "success")
+            return redirect(url_for('parametres_admin'))
+
     except Exception as e:
         conn.rollback()
-        return jsonify(error=str(e)), 500
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            return jsonify(error=str(e)), 500
+        flash(f"Erreur : {str(e)}", "danger")
+        return redirect(url_for('parametres_admin'))
+
+
+@app.route('/last-duration/<niveau>')
+def get_last_duration(niveau):
+    cursor.execute("""
+        SELECT date_fermeture 
+        FROM configuration_reclamation 
+        WHERE niveau = %s 
+        ORDER BY date_fermeture DESC 
+        LIMIT 1
+    """, (niveau,))
+    result = cursor.fetchone()
+
+    if result:
+        duration = result[0] - datetime.now(timezone.utc)
+        return jsonify({
+            'days': duration.days,
+            'hours': duration.seconds // 3600
+        })
+    return jsonify({})
 @app.route('/change_admin_password', methods=['POST'])
 def change_admin_password():
     if not session.get('logged_in') or session.get('role') != 'admin':
@@ -407,6 +467,23 @@ def parametres_admin():
     cursor.execute("SELECT email_admin, pwd_admin FROM user WHERE email_admin = %s", (email,))
     user_A = cursor.fetchone()
 
+    edit_id = request.args.get('edit_id')
+    editing_config = None
+    if edit_id:
+        cursor.execute("""
+                SELECT id, niveau, code_mat, date_fermeture 
+                FROM configuration_reclamation 
+                WHERE id = %s
+            """, (edit_id,))
+        config_row = cursor.fetchone()
+        if config_row:
+            editing_config = {
+                'id': config_row[0],
+                'niveau': config_row[1],
+                'matieres': config_row[2].split(','),
+                'date_fermeture': config_row[3].strftime('%Y-%m-%dT%H:%M')
+            }
+
     # Récupération des données structurées depuis la base
     cursor.execute("""
         SELECT code_mat, dept_mat, niveau_de_licence, semestre 
@@ -451,7 +528,7 @@ def parametres_admin():
             'dept': dept_mat,
             'numero': numero
         })
-        # Ajout de la récupération des configurations actives
+        # In parametres_admin route
         cursor.execute("""
             SELECT id, niveau, code_mat, date_fermeture 
             FROM configuration_reclamation 
@@ -466,22 +543,42 @@ def parametres_admin():
                 'matieres': row[2].split(','),
                 'date_fermeture': row[3]
             })
+
+        edit_id = request.args.get('edit_id')
+        editing_config = None
+        if edit_id:
+            cursor.execute("""
+                    SELECT id, niveau, code_mat, date_fermeture 
+                    FROM configuration_reclamation 
+                    WHERE id = %s
+                """, (edit_id,))
+            config_row = cursor.fetchone()
+            if config_row:
+                editing_config = {
+                    'id': config_row[0],
+                    'niveau': config_row[1],
+                    'matieres': config_row[2].split(','),
+                    'date_fermeture': config_row[3].strftime('%Y-%m-%dT%H:%M')
+                }
+
     return render_template('parametres_admin.html',
                            matieres=structured_data,
                            user_A=user_A,
-                           active_configs=active_configs)
+                           active_configs=active_configs,datetime=datetime,editing_config=editing_config,
+                           timedelta=timedelta)
 
 
 @app.template_filter('time_remaining')
 def time_remaining_filter(dt):
+    if dt.tzinfo is None:
+        dt = dt.replace(tzinfo=timezone.utc)
     now = datetime.now(timezone.utc)
     diff = dt - now
     if diff.total_seconds() <= 0:
         return "Expiré"
-
     hours = diff.seconds // 3600
     minutes = (diff.seconds % 3600) // 60
-    return f"{hours}h {minutes}m restantes"
+    return f"{hours}h {minutes:02d}m {diff.seconds % 60:02d}s restantes"
 @app.route('/change_password', methods=['POST'])
 def change_password():
     if not session.get('logged_in'):
