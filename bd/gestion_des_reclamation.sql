@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 05, 2025 at 05:06 AM
+-- Generation Time: Apr 11, 2025 at 01:26 AM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -30,17 +30,18 @@ CREATE TABLE IF NOT EXISTS `configuration_reclamation` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `niveau` varchar(2) NOT NULL,
   `code_mat` text NOT NULL,
-  `date_fermeture` date NOT NULL,
+  `date_fermeture` datetime NOT NULL,
   PRIMARY KEY (`id`),
-  UNIQUE KEY `unique_config` (`niveau`,`date_fermeture`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=7 ;
+  UNIQUE KEY `unique_config` (`niveau`,`date_fermeture`),
+  KEY `idx_date_fermeture` (`date_fermeture`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=58 ;
 
 --
 -- Dumping data for table `configuration_reclamation`
 --
 
 INSERT INTO `configuration_reclamation` (`id`, `niveau`, `code_mat`, `date_fermeture`) VALUES
-(6, 'L1', 'GCGP_21,GCGP_22,GCGP_23,GCGP_24,GCGP_25,GCGP_26,GCGP_27,GEER_21,GEER_22,GEER_23,GEER_24,GEER_25,GEER_26,HE_21,HE_22,HE_23,ST_21,ST_22,ST_23', '2025-04-05');
+(56, 'L3', 'GCGP_54,GCGP_55', '2025-04-11 22:34:00');
 
 -- --------------------------------------------------------
 
@@ -63,7 +64,7 @@ CREATE TABLE IF NOT EXISTS `etudiant` (
 --
 
 INSERT INTO `etudiant` (`matricule_etd`, `Email`, `Departement`, `Licence`, `pwd`) VALUES
-(23501, '23501@isme.esp.mr', 'GCGP', 'L1', '2222'),
+(23501, '23501@isme.esp.mr', 'GCGP', 'L1', '1111'),
 (23502, '23502@isme.esp.mr', 'GEER', 'L2', '1234'),
 (23503, '23503@isme.esp.mr', 'GCGP', 'L1', '123');
 
@@ -187,23 +188,32 @@ CREATE TABLE IF NOT EXISTS `reclamation` (
   `id_rec` int(11) NOT NULL AUTO_INCREMENT,
   `Détails` text NOT NULL,
   `Objet_rec` varchar(255) NOT NULL,
-  `moment_de_creation` date NOT NULL,
+  `moment_de_creation` datetime NOT NULL,
   `matricule_etd` int(11) NOT NULL,
   `code_mat` varchar(50) DEFAULT NULL,
-  `statut` varchar(20) DEFAULT 'En attente',
+  `statut` enum('En attente','En traitement','Accepté','Refusé') DEFAULT 'En attente',
   PRIMARY KEY (`id_rec`),
   UNIQUE KEY `unique_reclamation` (`matricule_etd`,`code_mat`),
   KEY `matricule_etd` (`matricule_etd`),
   KEY `code_mat` (`code_mat`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=14 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=90 ;
 
 --
 -- Dumping data for table `reclamation`
 --
 
 INSERT INTO `reclamation` (`id_rec`, `Détails`, `Objet_rec`, `moment_de_creation`, `matricule_etd`, `code_mat`, `statut`) VALUES
-(11, 'lo', 'devoir', '2025-03-29', 23502, 'GCGP_11', 'En attente'),
-(13, 'kkk', 'Devoir', '2025-03-29', 23501, 'ST_12', 'En attente');
+(17, 'nnnnnnn', 'Devoir', '2025-04-05 00:00:00', 23502, 'GEER_34', 'Accepté'),
+(19, 'kalma \r\n', 'Examen', '2025-04-07 00:00:00', 23502, 'GEER_41', 'Refusé'),
+(21, '15\r\n', 'Devoir', '2025-04-08 00:00:00', 23502, 'GEER_45', 'Refusé'),
+(38, '2222', 'Examen', '2025-04-08 00:00:00', 23502, 'GEER_46', 'Refusé'),
+(66, '20/20/20', 'Devoir', '2025-04-08 16:45:21', 23502, 'HE_42', 'En attente'),
+(68, '20\r\n\r\n', 'Devoir', '2025-04-08 17:01:01', 23502, 'GEER_44', 'En attente'),
+(85, '20/20', 'Devoir', '2025-04-09 18:51:36', 23502, 'GEER_43', 'En attente'),
+(86, 'je pense mon note est 17', 'Devoir', '2025-04-10 21:49:33', 23501, 'HE_22', 'Accepté'),
+(87, 'j''ai trouve 0 ', 'TP', '2025-04-10 21:50:36', 23501, 'GCGP_22', 'Refusé'),
+(88, '20/20', 'Examen', '2025-04-10 21:51:14', 23501, 'ST_22', 'Refusé'),
+(89, 'c''est pas bon', 'Examen', '2025-04-10 22:24:45', 23501, 'GCGP_23', 'En attente');
 
 -- --------------------------------------------------------
 
