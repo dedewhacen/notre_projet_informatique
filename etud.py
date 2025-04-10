@@ -5,7 +5,6 @@ from flask_wtf.csrf import CSRFProtect
 from werkzeug.security import generate_password_hash, check_password_hash
 from apscheduler.schedulers.background import BackgroundScheduler
 import atexit
-
 app = Flask(__name__)
 csrf = CSRFProtect(app)
 app.secret_key = 'votre_cle_secrete_tres_secrete'
@@ -74,6 +73,7 @@ def admin_dashboard():
     # Connexion et exécution SQL sécurisée
     query= """
     SELECT 
+        r.id_rec,
         e.Email AS Email_etudiant,
         e.matricule_etd AS Matricule,
         m.code_mat AS Matiere_reclamee,
@@ -99,52 +99,77 @@ def admin_dashboard():
     reclamations = []
     for row in results:
         reclamations.append({
-            'email': row[0],
-            'matricule': row[1],
-            'matiere': row[2],
-            'departement': row[3],
-            'niveau': row[4],
-            'statut': row[5],
-            'date_creation': row[6],
-            'objet': row[7],
-            'details': row[8]
+            'id_rec':row[0],
+            'email': row[1],
+            'matricule': row[2],
+            'matiere': row[3],
+            'departement': row[4],
+            'niveau': row[5],
+            'statut': row[6],
+            'date_creation': row[7],
+            'objet': row[8],
+            'details': row[9]
         })
 
-    return render_template('admin.html', reclamations=reclamations)
+    cursor.execute("SELECT DISTINCT code_mat FROM reclamation")
+    matieres = [row[0] for row in cursor.fetchall()]
 
+    return render_template('admin.html',
+                           reclamations=reclamations,
+                           matieres=matieres)
 
 @app.route('/suivi_reclamations_etud')
 def suivi_reclamations_etud():
     if not session.get('logged_in'):
         return redirect(url_for('login'))
 
-    # Récupérer le matricule via l'email de session
-    email = session.get('user_email')  # Utilisation de .get() pour éviter KeyError
+    email = session.get('user_email')
     if not email:
         flash("Erreur : aucune session utilisateur détectée.", "danger")
         return redirect(url_for('login'))
 
-    cursor.execute("SELECT matricule_etd FROM etudiant WHERE Email = %s", (email,))
+    # Récupération des infos étudiant
+    cursor.execute("SELECT matricule_etd, Licence FROM etudiant WHERE Email = %s", (email,))
     result = cursor.fetchone()
-
-    if not result:  # Vérifier si l'étudiant existe
+    if not result:
         flash("Aucun étudiant trouvé avec cet email.", "warning")
         return redirect(url_for('login'))
 
-    matricule = result[0]  # Récupérer la valeur correcte
+    matricule, niveau_etudiant = result
 
-    # Filtrer par matricule
+    # Récupération des réclamations
     cursor.execute("""
-        SELECT id_rec, Détails, Objet_rec, moment_de_creation, matricule_etd, code_mat, statut 
+        SELECT id_rec, Détails, Objet_rec, moment_de_creation, code_mat, statut 
         FROM reclamation 
         WHERE matricule_etd = %s
     """, (matricule,))
-
     reclamations = cursor.fetchall()
 
-    cursor.execute("SELECT MAX(date_fermeture) FROM configuration_reclamation")
-    date_fermeture = cursor.fetchone()[0]
-    return render_template('suivi_reclamations_etud.html', reclamations=reclamations,date_fermeture=date_fermeture)
+    # Configuration active
+    cursor.execute("""
+        SELECT date_fermeture 
+        FROM configuration_reclamation 
+        WHERE niveau = %s 
+        AND date_fermeture > NOW()
+        ORDER BY date_fermeture DESC 
+        LIMIT 1
+    """, (niveau_etudiant,))
+    config_active = cursor.fetchone()
+
+    date_fermeture = config_active[0] if config_active else None
+    now = datetime.now(timezone.utc)
+    is_expired = True  # Par défaut considéré comme expiré
+
+    if date_fermeture:
+        # Conversion en datetime aware si nécessaire
+        if date_fermeture.tzinfo is None:
+            date_fermeture = date_fermeture.replace(tzinfo=timezone.utc)
+        is_expired = now > date_fermeture
+
+    return render_template('suivi_reclamations_etud.html',
+                           reclamations=reclamations,
+                           date_fermeture=date_fermeture,
+                           is_expired=is_expired)
 
 
 @app.route('/supprimer_reclamation/<int:id_rec>', methods=['POST'])
@@ -176,77 +201,128 @@ def modifier_reclamation_etud(id_rec):
 @app.route('/etudiant', methods=['GET', 'POST'])
 def etudiant():
     email = session.get('user_email')
-    message = None
-    category = 'success'
+    if not email or 'user_email' not in session:
+        return redirect(url_for('login'))
 
-    # Récupération des données étudiant
-    cursor.execute("SELECT matricule_etd, Email, Licence, Departement FROM etudiant WHERE Email = %s",
-                   (email,))
-    etudiant_data = cursor.fetchone()
-    niveau_etudiant = etudiant_data[2]  # Licence (L1, L2, etc.)
-    departement_etudiant = etudiant_data[3]  # Département (GCGP, GEER, etc.)
+    try:
+        # Récupération des infos étudiant
+        cursor.execute(
+            "SELECT matricule_etd, Email, Licence, Departement FROM etudiant WHERE Email = %s",
+            (email,)
+        )
+        etudiant_data = cursor.fetchone()
+        if not etudiant_data:
+            flash("Profil étudiant introuvable", "danger")
+            return redirect(url_for('login'))
 
-    # Récupération des matières autorisées pour le niveau
-    cursor.execute("""
-        SELECT code_mat 
-        FROM configuration_reclamation 
-        WHERE niveau = %s 
-        ORDER BY date_fermeture DESC 
-        LIMIT 1
-    """, (niveau_etudiant,))
-    result = cursor.fetchone()
-    matieres_autorisees = result[0].split(',') if result else []
+        matricule, _, niveau, departement = etudiant_data
 
-    # Filtrage des matières par département et niveau
-    filtered_matieres = []
-    if matieres_autorisees:
-        # Création des placeholders pour la clause IN
-        placeholders = ', '.join(['%s'] * len(matieres_autorisees))
-        # Requête pour filtrer les matières par département et niveau
-        query = f"""
-            SELECT code_mat 
-            FROM matiere 
-            WHERE code_mat IN ({placeholders}) 
-            AND (dept_mat = %s OR dept_mat = 'COMN')
-            AND niveau_de_licence = %s
-        """
-        params = tuple(matieres_autorisees) + (departement_etudiant, niveau_etudiant)
-        cursor.execute(query, params)
-        filtered_matieres = [row[0] for row in cursor.fetchall()]
+        # Récupération des matières déjà réclamées
+        cursor.execute(
+            "SELECT code_mat FROM reclamation WHERE matricule_etd = %s",
+            (matricule,)
+        )
+        claimed_matieres = [row[0] for row in cursor.fetchall()]
 
-    if request.method == 'POST':
-        try:
-            matricule = request.form['matricule']
-            matiere = request.form['matiere']
-            if matiere not in filtered_matieres:
-                flash("Cette matière n'est pas autorisée pour votre niveau ou département", "danger")
+        # Récupération des matières disponibles
+        available_matieres = []
+        cursor.execute(
+            """SELECT code_mat FROM configuration_reclamation
+            WHERE niveau = %s ORDER BY date_fermeture DESC LIMIT 1""",
+            (niveau,)
+        )
+        config = cursor.fetchone()
+
+        if config and config[0]:
+            matieres_list = config[0].split(',')
+            placeholders = ','.join(['%s'] * len(matieres_list))
+
+            cursor.execute(
+                f"""SELECT m.code_mat, m.dept_mat 
+                FROM matiere m
+                WHERE m.code_mat IN ({placeholders})
+                AND (m.dept_mat = %s OR m.dept_mat = 'COMN')
+                AND m.niveau_de_licence = %s""",
+                (*matieres_list, departement, niveau)
+            )
+            for row in cursor.fetchall():
+                available_matieres.append({
+                    'code': row[0],
+                    'dept': row[1],
+                    'claimed': row[0] in claimed_matieres
+                })
+
+        # Traitement du formulaire
+        if request.method == 'POST':
+            matiere_code = request.form.get('matiere')
+            objet = request.form.get('objet')
+
+            # Vérification préalable de la matière
+            if not matiere_code or matiere_code in claimed_matieres:
+                flash("Cette matière a déjà fait l'objet d'une réclamation", "danger")
                 return redirect(url_for('etudiant'))
-            objet_rec = request.form.getlist('objet')
-            details = request.form['details']
-            moment_de_reclamation = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-            objets_str = ','.join(objet_rec)
 
-            # Insertion réclamation avec vérification unicité
-            cursor.execute("""
-                INSERT INTO reclamation (Détails, Objet_rec, moment_de_creation, matricule_etd, code_mat) 
-                VALUES (%s, %s, %s, %s, %s)
-            """, (details, objets_str, moment_de_reclamation, matricule, matiere))
-            conn.commit()
-            flash("Réclamation soumise avec succès!", "success")
-            return redirect(url_for('suivi_reclamations_etud'))
+            # Validation des champs
+            required_fields = ['matricule', 'details']
+            if not all(request.form.get(field) for field in required_fields):
+                flash("Tous les champs obligatoires doivent être remplis", "danger")
+                return redirect(url_for('etudiant'))
 
-        except mysql.connector.IntegrityError as e:
-            conn.rollback()
-            if 'unique_reclamation' in str(e):
-                flash("Vous avez déjà une réclamation pour cette matière et cet objet", "danger")
-            else:
-                flash("Une erreur est survenue lors de la soumission", "danger")
+            # Validation du type de réclamation
+            cursor.execute(
+                "SELECT dept_mat FROM matiere WHERE code_mat = %s",
+                (matiere_code,)
+            )
+            matiere_dept = cursor.fetchone()
 
-    return render_template('page_etud.html',
-                           etudiant=etudiant_data,
-                           matieres=filtered_matieres,
-                           message=message,
-                           category=category)
+            if not matiere_dept:
+                flash("Matière invalide", "danger")
+                return redirect(url_for('etudiant'))
+
+            matiere_dept = matiere_dept[0]
+            allowed_types = ['Devoir', 'Examen', 'TP'] if matiere_dept in ('GCGP', 'GEER') else ['Devoir', 'Examen']
+
+            if objet not in allowed_types:
+                flash("Type de réclamation non autorisé pour cette matière", "danger")
+                return redirect(url_for('etudiant'))
+
+            # Insertion en base
+            try:
+                cursor.execute(
+                    """INSERT INTO reclamation 
+                    (Détails, Objet_rec, moment_de_creation, matricule_etd, code_mat)
+                    VALUES (%s, %s, %s, %s, %s)""",
+                    (request.form['details'],
+                     objet,
+                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                     matricule,
+                     matiere_code)
+                )
+                conn.commit()
+                flash("Réclamation enregistrée avec succès!", "success")
+                return redirect(url_for('suivi_reclamations_etud'))
+
+            except mysql.connector.IntegrityError as e:
+                conn.rollback()
+                if 'unique_reclamation' in str(e):
+                    flash("Une réclamation existe déjà pour cette matière", "danger")
+                else:
+                    flash("Erreur de base de données", "danger")
+                return redirect(url_for('etudiant'))
+
+        return render_template(
+            'page_etud.html',
+            etudiant=etudiant_data,
+            matieres=available_matieres,
+            claimed_matieres=claimed_matieres,
+            current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        )
+
+    except Exception as e:
+        conn.rollback()
+        flash(f"Erreur inattendue: {str(e)}", "danger")
+        app.logger.error(f"Erreur dans /etudiant: {str(e)}")
+        return redirect(url_for('etudiant'))
 
 
 # Modification de la route /save-config
@@ -436,7 +512,7 @@ def get_claimed_matieres():
     email = session['user_email']
     cursor.execute("""
         SELECT r.code_mat 
-        FROM réclamation r
+        FROM reclamation r
         JOIN etudiant e ON r.matricule_etd = e.matricule_etd 
         WHERE e.Email = %s
     """, (email,))
@@ -603,11 +679,31 @@ def change_password():
     return redirect(url_for('parametres'))
 
 
+@app.route('/update_status', methods=['POST'])
+def update_status():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        return jsonify(success=False, error="Unauthorized"), 403
+
+    data = request.get_json()
+    rec_id = data.get('reclamation_id')
+    new_status = data.get('new_status')
+
+    try:
+        cursor.execute("""
+            UPDATE reclamation 
+            SET statut = %s 
+            WHERE id_rec = %s
+        """, (new_status, rec_id))
+        conn.commit()
+        return jsonify(success=True)
+    except Exception as e:
+        conn.rollback()
+        return jsonify(success=False, error=str(e)), 500
+
 @app.route('/logout')
 def logout():
     # Supprime toutes les données de session
     session.clear()
     return redirect(url_for('login'))
-
 if __name__ == '__main__':
     app.run(debug=True)

@@ -8,6 +8,56 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
+        .status-chip {
+  padding: 0.5rem 1.2rem;
+  font-size: 0.85em;
+  border-radius: 1.5rem;
+  transition: all 0.3s ease;
+  text-transform: uppercase;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.status-chip.accepté {
+  background: #d1fae5;
+  color: #065f46;
+  border: 2px solid #34d399;
+}
+
+.status-chip.refusé {
+  background: #fee2e2;
+  color: #991b1b;
+  border: 2px solid #f87171;
+}
+
+.status-chip.en-attente {
+  background: #fef3c7;
+  color: #92400e;
+  border: 2px solid #fbbf24;
+}
+
+
+
+
+
+         /* Ajout de styles améliorés */
+        .hover-shadow {
+            transition: box-shadow 0.2s ease;
+        }
+        .hover-shadow:hover {
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
+        }
+        .status-badge {
+            min-width: 100px;
+            text-align: center;
+        }
+        .table-responsive {
+            overflow-x: auto;
+        }
+        .btn.disabled {
+    pointer-events: none;
+    opacity: 0.65;
+    box-shadow: none;
+}
         .header-bg {
             background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
         }
@@ -110,69 +160,145 @@
     .dropdown-item:hover {
       background: #f8f9fa;
     }
+
+
+
+
+
+
+        /*dede
+        /* Modification du header */
+.admin-gradient {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    padding: 1.5rem 2rem; /* Augmentation de la hauteur */
+    min-height: 90px; /* Hauteur minimale garantie */
+
+}
+
+/* Nouveau style pour le bouton principale */
+.btn-nouveau {
+    background: #2980b9 !important; /* Couleur harmonisée */
+    border: 2px solid rgba(255,255,255,0.3) !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem !important;
+    transition: all 0.3s ease !important;}
+}
+
+.btn-nouveau:hover {
+    background: #3498db !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Adaptation du dropdown Outils */
+.dropdown-menu {
+    min-width: 200px;
+}
+
+.dropdown-item.logout {
+    color: #dc3545 !important;
+}
+
+.dropdown-item.logout:hover {
+    background: #ffe6e6 !important;
+}
+
+/* Espacement du tableau */
+.scrollable-content {
+    margin-top: 20px; /* Déplacement vers le bas */
+}
+
+/* Amélioration du tableau */
+.table-hover tbody tr {
+    transition: all 0.2s ease;
+}
+
+.table-hover tbody tr:hover {
+    background: #f8f9fa !important;
+    transform: scale(1.002);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
     </style>
 </head>
 <body class="d-flex flex-column h-100 bg-light">
+     {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+        {% for category, message in messages %}
+            <div class="alert alert-{{ category }} alert-dismissible fade show mt-3 mx-3" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            </div>
+
+            <script>
+                // Fermer automatiquement après 3 secondes
+                (function() {
+                    let alert = document.querySelector('.alert');
+                    setTimeout(() => {
+                        alert.classList.remove('show');
+                        alert.classList.add('hide');
+                        setTimeout(() => alert.remove(), 150);
+                    }, 3000);
+                })();
+            </script>
+        {% endfor %}
+    {% endif %}
+{% endwith %}
         <!-- En-tête -->
-        <header class="admin-gradient text-white p-3 shadow">
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <h1 class="h4 mb-0">
-          <i class="fas fa-file-contract me-2"></i>ISME
-        </h1>
-        <small class="text-white-50 opacity-75">Gestion avancée des réclamations étudiantes</small>
-      </div>
-      <div class="d-flex gap-2 align-items-center">
-        <!-- Menu global Outils -->
-        <div class="dropdown">
-          <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            <i class="fas fa-sliders-h me-1"></i>
-            <span class="d-none d-md-inline">Outils</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end shadow">
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="{{ url_for('parametres') }}">
-             <i class="fas fa-cog text-primary me-2"></i> Paramètres
-             </a>
+       <header class="admin-gradient text-white shadow-lg">
+        <div class="header-content d-flex justify-content-between align-items-center">
+            <div>
+                <h2 class="brand-title mb-0">
+                    <i class="fas fa-file-contract me-2"></i>ISME
+                </h2>
+                <small class="brand-subtitle">Gestion avancée des réclamations étudiantes</small>
+            </div>
 
-            </li>
-          </ul>
-        </div>
-        <!-- Bouton Déconnexion -->
-        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
-          <i class="fas fa-sign-out-alt me-1"></i>
-          <span class="d-none d-md-inline">Déconnexion</span>
-        </a>
-      </div>
-    </div>
-  </header>
+        <div class="d-flex align-items-center gap-3">
+            <a href="{{ url_for('etudiant') }}"
+                class="btn btn-nouveau {% if not date_fermeture %}disabled{% endif %}"
+               id="nouvelle-btn">
+                <i class="fas fa-plus-circle"></i>
+                <span>Nouvelle Réclamation</span>
+            </a>
 
-        <!-- Contenu principal -->
-        <div class="h-100 d-flex flex-column">
-            <!-- Barre d'outils -->
-            <div class="p-3 border-bottom">
-                <div class="row g-2 align-items-center">
-                    <div class="col-md-8">
-                        <form class="input-group">
-                            <input type="text" class="form-control"
-                                   placeholder="Rechercher une réclamation...">
-                            <button class="btn btn-primary" type="submit">
-                                <i class="fas fa-search"></i>
-                            </button>
-                        </form>
-                    </div>
-                    <div class="col-md-4 text-end mt-2 mt-md-0">
-                        <a href="{{ url_for('etudiant') }}" class="btn btn-success w-100">
-                            <i class="fas fa-plus-circle me-2"></i>Nouvelle Réclamation
+            <div class="dropdown">
+                <button class="header-btn btn btn-light dropdown-toggle"
+                        type="button"
+                        data-bs-toggle="dropdown"
+                        aria-expanded="false">
+                    <i class="fas fa-sliders-h"></i>
+                    <span>Outils</span>
+                </button>
+                <ul class="dropdown-menu dropdown-menu-end shadow">
+                    <li>
+                        <a class="dropdown-item d-flex align-items-center"
+                           href="{{ url_for('parametres') }}">
+                            <i class="fas fa-cog text-primary me-2"></i>
+                            Paramètres
                         </a>
-                    </div>
+                    </li>
+                     <li><hr class="dropdown-divider"></li>
+                        <li>
+                            <a class="dropdown-item logout d-flex align-items-center"
+                               href="{{ url_for('logout') }}">
+                                <i class="fas fa-sign-out-alt me-2"></i>
+                                Déconnexion
+                            </a>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
+        </div>
+    </div>
+</header>
+
             <!-- Tableau -->
             <div class="scrollable-content">
-                <div class="p-3">
-                    <table class="table table-hover align-middle mb-0">
+                <div class="container-fluid pt-3">
+                    <div class="card border-0 shadow-sm">
+                    <div class="card-body p-4">
+                    <table class="table table-hover align-middle mb-0 bg-white">
                         <thead class="sticky-top bg-light z-1">
                             <tr>
                                 <th>#</th>
@@ -187,31 +313,40 @@
                             {% for rec in reclamations %}
                             <tr>
                                 <td class="fw-bold">{{ loop.index }}</td>
-                                <td><span class="badge bg-primary bg-opacity-10 text-primary py-2">{{ rec[5] }}</span></td>
-                                <td><span class="status-badge bg-warning text-dark"><i class="fas fa-paper-plane me-1"></i>Soumise</span></td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary py-2">{{ rec[4] }}</span></td>
+                                <td>
+                                  <span class="status-chip {{ rec[5]|lower|replace(' ', '-') }}">
+                                    {{ rec[5] }}
+                                  </span>
+                                </td>
                                 <td class="text-truncate" style="max-width: 300px;">{{ rec[1] }}</td>
                                 <td>{{ rec[3] }}</td>
                                 <td class="text-center">
-                                    <div class="d-flex gap-2 justify-content-center">
-                                        <a href="{{ url_for('modifier_reclamation_etud', id_rec=rec[0]) }}"
-                                           class="btn btn-warning btn-sm">
-                                            <i class="fas fa-edit"></i>
-                                            <span class="d-none d-md-inline">Modifier</span>
-                                        </a>
-                                        <form method="POST" action="{{ url_for('supprimer_reclamation', id_rec=rec[0]) }}">
-                                            <button type="submit"
-                                                    class="btn btn-danger btn-sm"
-                                                    onclick="return confirm('Confirmer la suppression ?')">
-                                                <i class="fas fa-trash-alt"></i>
-                                                <span class="d-none d-md-inline">Supprimer</span>
-                                            </button>
-                                        </form>
-                                    </div>
-                                </td>
+    <div class="d-flex gap-2 justify-content-center">
+        <a href="{{ url_for('modifier_reclamation_etud', id_rec=rec[0]) }}"
+           class="btn btn-warning btn-sm modifier-btn {% if is_expired %}disabled{% endif %}"
+           {% if is_expired %}disabled{% endif %}>
+            <i class="fas fa-edit"></i>
+            <span class="d-none d-md-inline">Modifier</span>
+        </a>
+        <form method="POST" action="{{ url_for('supprimer_reclamation', id_rec=rec[0]) }}">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+            <button type="submit"
+                    class="btn btn-danger btn-sm supprimer-btn {% if is_expired %}disabled{% endif %}"
+                    {% if is_expired %}disabled{% endif %}
+                    onclick="return confirm('Confirmer la suppression ?')">
+                <i class="fas fa-trash-alt"></i>
+                <span class="d-none d-md-inline">Supprimer</span>
+            </button>
+        </form>
+    </div>
+</td>
                             </tr>
                             {% endfor %}
                         </tbody>
                     </table>
+                    </div>
+                    </div>
                 </div>
             </div>
 
@@ -220,6 +355,34 @@
 
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script>
+      function checkDeadline() {
+    const now = new Date();
+    const fermeture = {% if date_fermeture %}new Date("{{ date_fermeture.isoformat() }}"){% else %}null{% endif %};
+
+    const nouvelleBtn = document.getElementById('nouvelle-btn');
+    const modifierBtns = document.querySelectorAll('.modifier-btn');
+    const supprimerBtns = document.querySelectorAll('.supprimer-btn');
+
+    let isExpired = !fermeture || now > fermeture;
+
+    // Mise à jour de tous les boutons
+    [nouvelleBtn, ...modifierBtns, ...supprimerBtns].forEach(btn => {
+        btn.disabled = isExpired;
+        btn.classList.toggle('disabled', isExpired);
+        btn.style.opacity = isExpired ? '0.5' : '1';
+        btn.style.cursor = isExpired ? 'not-allowed' : 'pointer';
+    });
+}
+
+// Vérification initiale
+checkDeadline();
+// Vérification toutes les secondes
+setInterval(checkDeadline, 1000);
+// Vérification initiale
+checkDeadline();
+// Vérification toutes les secondes
+setInterval(checkDeadline, 1000);
+
 function checkDeadline() {
     const now = new Date();
     const fermeture = new Date("{{ date_fermeture }}");

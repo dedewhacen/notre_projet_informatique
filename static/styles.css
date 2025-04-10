@@ -1,0 +1,47 @@
+/* static/css/styles.css */
+/* Styles du header */
+.admin-gradient {
+    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
+    padding: 1.5rem 2rem;
+    min-height: 90px;
+}
+
+.brand-title {
+    font-size: 1.8rem;
+    color: white;
+}
+
+.brand-subtitle {
+    font-size: 0.9rem;
+    color: rgba(255,255,255,0.85);
+}
+
+.btn-nouveau {
+    background: #2980b9;
+    border: 2px solid rgba(255,255,255,0.3);
+    border-radius: 8px;
+    padding: 0.75rem 1.5rem;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.btn-nouveau:hover {
+    background: #3498db;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .admin-gradient {
+        padding: 1rem;
+    }
+
+    .btn-nouveau span,
+    .dropdown-toggle span {
+        display: none;
+    }
+}
+header.admin-gradient {
+    padding: 2rem 0;  /* 2rem en haut et en bas */
+}
