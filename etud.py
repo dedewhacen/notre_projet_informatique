@@ -23,10 +23,12 @@ scheduler.start()
 
 def delete_expired_configs():
     with app.app_context():
-        now = datetime.now(timezone.utc)
+        now = datetime.utcnow()
+        # Supprimer uniquement les configurations expirées
         cursor.execute("DELETE FROM configuration_reclamation WHERE date_fermeture <= %s", (now,))
         conn.commit()
-        print(f"Suppression automatique effectuée à {now}")
+        print(f"Nettoyage des configurations à {now}")
+
 
 scheduler.add_job(delete_expired_configs, 'interval', minutes=1)
 atexit.register(lambda: scheduler.shutdown())
@@ -118,6 +120,7 @@ def admin_dashboard():
                            reclamations=reclamations,
                            matieres=matieres)
 
+
 @app.route('/suivi_reclamations_etud')
 def suivi_reclamations_etud():
     if not session.get('logged_in'):
@@ -125,51 +128,67 @@ def suivi_reclamations_etud():
 
     email = session.get('user_email')
     if not email:
-        flash("Erreur : aucune session utilisateur détectée.", "danger")
+        flash("Session invalide", "danger")
         return redirect(url_for('login'))
 
     # Récupération des infos étudiant
-    cursor.execute("SELECT matricule_etd, Licence FROM etudiant WHERE Email = %s", (email,))
+    cursor.execute(
+        "SELECT matricule_etd, Licence FROM etudiant WHERE Email = %s",
+        (email,))
     result = cursor.fetchone()
     if not result:
-        flash("Aucun étudiant trouvé avec cet email.", "warning")
+        flash("Étudiant introuvable", "danger")
         return redirect(url_for('login'))
 
-    matricule, niveau_etudiant = result
+    matricule, niveau = result
 
-    # Récupération des réclamations
-    cursor.execute("""
-        SELECT id_rec, Détails, Objet_rec, moment_de_creation, code_mat, statut 
-        FROM reclamation 
-        WHERE matricule_etd = %s
-    """, (matricule,))
-    reclamations = cursor.fetchall()
-
-    # Configuration active
-    cursor.execute("""
-        SELECT date_fermeture 
+    # Récupération de la configuration active
+    cursor.execute(
+        """SELECT id, date_fermeture 
         FROM configuration_reclamation 
-        WHERE niveau = %s 
-        AND date_fermeture > NOW()
-        ORDER BY date_fermeture DESC 
-        LIMIT 1
-    """, (niveau_etudiant,))
+        WHERE niveau = %s AND date_fermeture > NOW()
+        ORDER BY date_fermeture DESC LIMIT 1""",
+        (niveau,))
     config_active = cursor.fetchone()
+    current_config_id = config_active[0] if config_active else None
+    date_fermeture = config_active[1] if config_active else None
 
-    date_fermeture = config_active[0] if config_active else None
-    now = datetime.now(timezone.utc)
-    is_expired = True  # Par défaut considéré comme expiré
-
+    # Calcul de l'expiration
+    is_expired = True
     if date_fermeture:
-        # Conversion en datetime aware si nécessaire
+        now = datetime.now(timezone.utc)
         if date_fermeture.tzinfo is None:
             date_fermeture = date_fermeture.replace(tzinfo=timezone.utc)
         is_expired = now > date_fermeture
 
-    return render_template('suivi_reclamations_etud.html',
-                           reclamations=reclamations,
-                           date_fermeture=date_fermeture,
-                           is_expired=is_expired)
+    # Récupération des réclamations avec leur config
+    cursor.execute(
+        """SELECT id_rec, Détails, Objet_rec, 
+           moment_de_creation, code_mat, statut, config_id 
+        FROM reclamation 
+        WHERE matricule_etd = %s
+        ORDER BY moment_de_creation DESC""",
+        (matricule,))
+
+    reclamations = []
+    for rec in cursor.fetchall():
+        reclamations.append({
+            'id_rec': rec[0],
+            'details': rec[1],
+            'objet': rec[2],
+            'date_creation': rec[3],
+            'matiere': rec[4],
+            'statut': rec[5],
+            'config_id': rec[6],
+            'is_current': rec[6] == current_config_id
+        })
+
+    return render_template(
+        'suivi_reclamations_etud.html',
+        reclamations=reclamations,
+        current_config_id=current_config_id,
+        is_expired=is_expired,
+        date_fermeture=date_fermeture)
 
 
 @app.route('/supprimer_reclamation/<int:id_rec>', methods=['POST'])
@@ -208,8 +227,7 @@ def etudiant():
         # Récupération des infos étudiant
         cursor.execute(
             "SELECT matricule_etd, Email, Licence, Departement FROM etudiant WHERE Email = %s",
-            (email,)
-        )
+            (email,))
         etudiant_data = cursor.fetchone()
         if not etudiant_data:
             flash("Profil étudiant introuvable", "danger")
@@ -217,111 +235,114 @@ def etudiant():
 
         matricule, _, niveau, departement = etudiant_data
 
-        # Récupération des matières déjà réclamées
+        # Récupération de la configuration active actuelle
         cursor.execute(
-            "SELECT code_mat FROM reclamation WHERE matricule_etd = %s",
-            (matricule,)
-        )
-        claimed_matieres = [row[0] for row in cursor.fetchall()]
+            """SELECT id, code_mat, date_fermeture 
+            FROM configuration_reclamation 
+            WHERE niveau = %s AND date_fermeture > NOW()
+            ORDER BY date_fermeture DESC LIMIT 1""",
+            (niveau,))
+        config_active = cursor.fetchone()
 
-        # Récupération des matières disponibles
+        # Gestion des matières disponibles
         available_matieres = []
-        cursor.execute(
-            """SELECT code_mat FROM configuration_reclamation
-            WHERE niveau = %s ORDER BY date_fermeture DESC LIMIT 1""",
-            (niveau,)
-        )
-        config = cursor.fetchone()
+        claimed_matieres = []
+        current_config_id = None
 
-        if config and config[0]:
-            matieres_list = config[0].split(',')
+        if config_active:
+            current_config_id, matieres_config, date_fermeture = config_active
+            matieres_list = matieres_config.split(',')
             placeholders = ','.join(['%s'] * len(matieres_list))
 
+            # Récupération des matières éligibles
             cursor.execute(
                 f"""SELECT m.code_mat, m.dept_mat 
                 FROM matiere m
                 WHERE m.code_mat IN ({placeholders})
                 AND (m.dept_mat = %s OR m.dept_mat = 'COMN')
                 AND m.niveau_de_licence = %s""",
-                (*matieres_list, departement, niveau)
-            )
-            for row in cursor.fetchall():
+                (*matieres_list, departement, niveau))
+
+            available_codes = [row[0] for row in cursor.fetchall()]
+
+            # Récupération des réclamations existantes pour cette config
+            cursor.execute(
+                """SELECT code_mat FROM reclamation 
+                WHERE matricule_etd = %s AND config_id = %s""",
+                (matricule, current_config_id))
+            claimed_matieres = [row[0] for row in cursor.fetchall()]
+
+            # Construction de la liste des matières disponibles
+            for code in available_codes:
                 available_matieres.append({
-                    'code': row[0],
-                    'dept': row[1],
-                    'claimed': row[0] in claimed_matieres
+                    'code': code,
+                    'claimed': code in claimed_matieres
                 })
 
         # Traitement du formulaire
         if request.method == 'POST':
+            if not config_active:
+                flash("Aucune période de réclamation active", "danger")
+                return redirect(url_for('etudiant'))
+
             matiere_code = request.form.get('matiere')
             objet = request.form.get('objet')
 
-            # Vérification préalable de la matière
+            # Validation des données
             if not matiere_code or matiere_code in claimed_matieres:
-                flash("Cette matière a déjà fait l'objet d'une réclamation", "danger")
+                flash("Matière invalide ou déjà réclamée", "danger")
                 return redirect(url_for('etudiant'))
 
-            # Validation des champs
-            required_fields = ['matricule', 'details']
-            if not all(request.form.get(field) for field in required_fields):
-                flash("Tous les champs obligatoires doivent être remplis", "danger")
-                return redirect(url_for('etudiant'))
-
-            # Validation du type de réclamation
+            # Vérification du type de réclamation
             cursor.execute(
                 "SELECT dept_mat FROM matiere WHERE code_mat = %s",
-                (matiere_code,)
-            )
+                (matiere_code,))
             matiere_dept = cursor.fetchone()
 
             if not matiere_dept:
-                flash("Matière invalide", "danger")
+                flash("Matière introuvable", "danger")
                 return redirect(url_for('etudiant'))
 
             matiere_dept = matiere_dept[0]
             allowed_types = ['Devoir', 'Examen', 'TP'] if matiere_dept in ('GCGP', 'GEER') else ['Devoir', 'Examen']
 
             if objet not in allowed_types:
-                flash("Type de réclamation non autorisé pour cette matière", "danger")
+                flash("Type de réclamation non autorisé", "danger")
                 return redirect(url_for('etudiant'))
 
-            # Insertion en base
+            # Insertion de la réclamation
             try:
                 cursor.execute(
                     """INSERT INTO reclamation 
-                    (Détails, Objet_rec, moment_de_creation, matricule_etd, code_mat)
-                    VALUES (%s, %s, %s, %s, %s)""",
+                    (Détails, Objet_rec, moment_de_creation, 
+                     matricule_etd, code_mat, config_id)
+                    VALUES (%s, %s, %s, %s, %s, %s)""",
                     (request.form['details'],
                      objet,
-                     datetime.now().strftime('%Y-%m-%d %H:%M:%S'),
+                     datetime.now(),
                      matricule,
-                     matiere_code)
-                )
+                     matiere_code,
+                     current_config_id))
                 conn.commit()
-                flash("Réclamation enregistrée avec succès!", "success")
+                flash("Réclamation enregistrée !", "success")
                 return redirect(url_for('suivi_reclamations_etud'))
 
             except mysql.connector.IntegrityError as e:
                 conn.rollback()
-                if 'unique_reclamation' in str(e):
-                    flash("Une réclamation existe déjà pour cette matière", "danger")
-                else:
-                    flash("Erreur de base de données", "danger")
+                flash("Erreur : Cette matière a déjà été réclamée", "danger")
                 return redirect(url_for('etudiant'))
 
         return render_template(
             'page_etud.html',
             etudiant=etudiant_data,
             matieres=available_matieres,
-            claimed_matieres=claimed_matieres,
-            current_time=datetime.now().strftime('%Y-%m-%d %H:%M:%S')
-        )
+            current_config=config_active,
+            current_time=datetime.now())
 
     except Exception as e:
         conn.rollback()
-        flash(f"Erreur inattendue: {str(e)}", "danger")
         app.logger.error(f"Erreur dans /etudiant: {str(e)}")
+        flash("Une erreur est survenue", "danger")
         return redirect(url_for('etudiant'))
 
 
@@ -335,7 +356,7 @@ def save_config():
     try:
         configs = request.get_json()
         print("Données reçues:", configs)  # Debug
-        current_time = datetime.now(timezone.utc)
+        current_time = datetime.utcnow()
         errors = []
         saved_configs = []
 
@@ -355,8 +376,9 @@ def save_config():
 
             # Conversion de la date
             try:
-                new_close_date = datetime.fromisoformat(date_fermeture_str.replace('Z', '+00:00')).astimezone(
-                    timezone.utc)
+                new_close_date = datetime.fromisoformat(
+                    config['date_fermeture'].replace('Z', '')
+                ).replace(tzinfo=None)
             except ValueError:
                 try:
                     # Fallback pour les dates sans timezone
@@ -366,7 +388,7 @@ def save_config():
                     continue
 
             # Vérification durée minimale
-            if new_close_date < current_time + timedelta(minutes=10):
+            if new_close_date < current_time :
                 errors.append(f"Date trop proche pour {niveau} (min. 10 minutes)")
                 continue
 
@@ -447,13 +469,22 @@ def delete_config(id):
         return redirect(url_for('login'))
 
     try:
+        # Étape 1 : Désassocier les réclamations de la configuration
+        cursor.execute("""
+            UPDATE reclamation 
+            SET config_id = NULL 
+            WHERE config_id = %s
+        """, (id,))
+
+        # Étape 2 : Supprimer la configuration
         cursor.execute("DELETE FROM configuration_reclamation WHERE id = %s", (id,))
+
         conn.commit()
 
         if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
             return jsonify(success=True)
         else:
-            flash("Configuration supprimée", "success")
+            flash("Configuration supprimée (réclamations conservées)", "success")
             return redirect(url_for('parametres_admin'))
 
     except Exception as e:
@@ -699,6 +730,52 @@ def update_status():
     except Exception as e:
         conn.rollback()
         return jsonify(success=False, error=str(e)), 500
+
+@app.route('/get_stats')
+def get_stats():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        abort(403)
+
+    try:
+        # 1. Basic counts
+        cursor.execute("SELECT COUNT(*) FROM reclamation")
+        total = cursor.fetchone()[0]
+
+        cursor.execute("SELECT statut, COUNT(*) FROM reclamation GROUP BY statut")
+        status_counts = {'Accepté': 0, 'Refusé': 0, 'En attente': 0}
+        for status, count in cursor.fetchall():
+            status_counts[status] = count
+
+        # 2. Top matieres by level
+        def get_top_matieres_by_level(level):
+            cursor.execute("""
+                SELECT r.code_mat, COUNT(*) as count 
+                FROM reclamation r
+                JOIN matiere m ON r.code_mat = m.code_mat
+                WHERE m.niveau_de_licence = %s
+                GROUP BY r.code_mat 
+                ORDER BY count DESC 
+                LIMIT 5
+            """, (level,))
+            return [{'code_mat': row[0], 'count': row[1]} for row in cursor.fetchall()]
+
+        l1_matieres = get_top_matieres_by_level('L1')
+        l2_matieres = get_top_matieres_by_level('L2')
+        l3_matieres = get_top_matieres_by_level('L3')
+
+        return jsonify({
+            'total': total,
+            'accepted': status_counts['Accepté'],
+            'rejected': status_counts['Refusé'],
+            'pending': status_counts['En attente'],
+            'l1_matieres': l1_matieres,
+            'l2_matieres': l2_matieres,
+            'l3_matieres': l3_matieres
+        })
+
+    except Exception as e:
+        app.logger.error(f"Error generating stats: {str(e)}")
+        return jsonify({'error': 'Unable to generate statistics'}), 500
 
 @app.route('/logout')
 def logout():

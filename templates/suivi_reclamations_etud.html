@@ -313,28 +313,27 @@
                             {% for rec in reclamations %}
                             <tr>
                                 <td class="fw-bold">{{ loop.index }}</td>
-                                <td><span class="badge bg-primary bg-opacity-10 text-primary py-2">{{ rec[4] }}</span></td>
+                                <td><span class="badge bg-primary bg-opacity-10 text-primary py-2">{{ rec.matiere }}</span></td>
                                 <td>
                                   <span class="status-chip {{ rec[5]|lower|replace(' ', '-') }}">
-                                    {{ rec[5] }}
+                                    {{ rec.statut }}
                                   </span>
                                 </td>
-                                <td class="text-truncate" style="max-width: 300px;">{{ rec[1] }}</td>
-                                <td>{{ rec[3] }}</td>
+                                <td class="text-truncate" style="max-width: 300px;">{{ rec.details }}</td>
+                                <td>{{ rec.date_creation }}</td>
                                 <td class="text-center">
     <div class="d-flex gap-2 justify-content-center">
-        <a href="{{ url_for('modifier_reclamation_etud', id_rec=rec[0]) }}"
-           class="btn btn-warning btn-sm modifier-btn {% if is_expired %}disabled{% endif %}"
-           {% if is_expired %}disabled{% endif %}>
+        {% set can_edit = rec.config_id == current_config_id and not is_expired %}
+        <a href="{{ url_for('modifier_reclamation_etud', id_rec=rec.id_rec) }}"
+           class="btn btn-warning btn-sm modifier-btn {% if not can_edit %}disabled{% endif %}">
             <i class="fas fa-edit"></i>
             <span class="d-none d-md-inline">Modifier</span>
         </a>
-        <form method="POST" action="{{ url_for('supprimer_reclamation', id_rec=rec[0]) }}">
+        <form method="POST" action="{{ url_for('supprimer_reclamation', id_rec=rec.id_rec) }}">
             <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
             <button type="submit"
-                    class="btn btn-danger btn-sm supprimer-btn {% if is_expired %}disabled{% endif %}"
-                    {% if is_expired %}disabled{% endif %}
-                    onclick="return confirm('Confirmer la suppression ?')">
+                    class="btn btn-danger btn-sm supprimer-btn {% if not can_edit %}disabled{% endif %}"
+                     onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette réclamation ?')">
                 <i class="fas fa-trash-alt"></i>
                 <span class="d-none d-md-inline">Supprimer</span>
             </button>

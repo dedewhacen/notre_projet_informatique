@@ -1,13 +1,43 @@
 <!DOCTYPE html>
 <html lang="fr" class="h-100">
 <head>
-  <meta charset="UTF-8">
-  <meta name="csrf-token" content="{{ csrf_token() }}">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Admin Réclamations - ISME</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
+<meta charset="UTF-8">
+<meta name="csrf-token" content="{{ csrf_token() }}">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Admin Réclamations - ISME</title>
+<!-- Ajoutez ces lignes dans la section head -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+<link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+<style>
+    .dropdown-menu {
+    z-index: 1030 !important; /* Valeur supérieure à celle de l'en-tête sticky (1020) */
+    position: absolute; /* Assure le bon positionnement */
+}
+
+  .scrollable-admin {
+  /* SUPPRIMER CES LIGNES */
+  max-height: calc(100vh - 280px);
+  overflow-y: auto;
+}
+    /* Ajoutez ce style pour le dropdown */
+.dropdown-menu {
+  min-width: 220px;
+}
+
+.dropdown-item {
+  padding: 8px 15px;
+  display: flex;
+  align-items: center;
+}
+
+.dropdown-item i {
+  width: 20px;
+  margin-right: 10px;
+}
+
     .status-chip {
     padding: 0.5rem 1.2rem;
     font-size: 0.85em;
@@ -411,6 +441,18 @@
         <small class="text-white-50 opacity-75">Gestion avancée des réclamations étudiantes</small>
       </div>
       <div class="d-flex gap-2 align-items-center">
+
+        <!-- Remplacez le bouton simple par ce dropdown -->
+        <div class="dropdown ms-2">
+          <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="printDropdown" data-bs-toggle="dropdown">
+            <i class="fas fa-print me-1"></i> Imprimer le résultat
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><a class="dropdown-item" href="#" onclick="printTable(true)"><i class="fas fa-print me-2"></i>Imprimer directement</a></li>
+            <li><a class="dropdown-item" href="#" onclick="exportToPDF()"><i class="fas fa-file-pdf me-2"></i>Exporter en PDF</a></li>
+          </ul>
+        </div>
+
         <!-- Menu global Outils -->
         <div class="dropdown">
           <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
@@ -430,13 +472,10 @@
               </a>
             </li>
             <li><hr class="dropdown-divider"></li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="#">
-                <i class="fas fa-download text-info me-2"></i> Exporter données
-              </a>
-            </li>
           </ul>
         </div>
+
+
         <!-- Bouton Déconnexion -->
         <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
           <i class="fas fa-sign-out-alt me-1"></i>
@@ -491,29 +530,28 @@
 </section>
 
   <!-- Tableau Admin -->
-  <section class="container-fluid scrollable-admin">
+  <section class="container-fluid">
     <table class="table table-admin table-hover align-middle">
       <thead class="sticky-top bg-light">
-        <tr>
-          <th>#</th>
-          <th>Matricule</th>
-          <th>Étudiant</th>
-          <th>Matière</th>
-          <th>Département</th>
-          <th>Niveau</th>
-          <th>Date création</th>
-          <th>Objet</th>
-          <th>Détails</th>
-         <th>Statut</th>
-          <th class="text-center">Actions</th>
-        </tr>
-      </thead>
+          <tr>
+            <th>#</th>
+            <th>Matricule</th>
+            <!-- SUPPRIMER CETTE LIGNE -->
+            <th>Matière</th>
+            <th>Département</th>
+            <th>Niveau</th>
+            <th>Date création</th>
+            <th>Objet</th>
+            <th>Détails</th>
+            <th>Statut</th>
+            <th class="text-center">Actions</th>
+          </tr>
+        </thead>
       <tbody>
         {% for rec in reclamations %}
         <tr>
           <td>{{ loop.index }}</td>
           <td>{{ rec.matricule }}</td>
-          <td>{{ rec.email }}</td>
           <td>{{ rec.matiere }}</td>
           <td>{{ rec.departement }}</td>
           <td>{{ rec.niveau }}</td>
@@ -553,7 +591,106 @@
     </table>
   </section>
 
-  <nav aria-label="Pagination" class="mt-3">
+
+
+  <!-- Modal Statistiques (à compléter selon besoins) -->
+  <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-chart-pie me-2"></i>Statistiques des Réclamations
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <!-- Cartes KPIs -->
+                <div class="row mb-4">
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-primary">
+                            <div class="card-body text-center">
+                                <h3 class="text-primary" id="totalRec">0</h3>
+                                <small class="text-muted">Total Réclamations</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-success">
+                            <div class="card-body text-center">
+                                <h3 class="text-success" id="acceptedRec">0</h3>
+                                <small class="text-muted">Acceptées</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-danger">
+                            <div class="card-body text-center">
+                                <h3 class="text-danger" id="rejectedRec">0</h3>
+                                <small class="text-muted">Refusées</small>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-3 mb-3">
+                        <div class="card border-warning">
+                            <div class="card-body text-center">
+                                <h3 class="text-warning" id="pendingRec">0</h3>
+                                <small class="text-muted">En Attente</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Graphique Statut -->
+                <div class="card mb-4">
+                    <div class="card-header bg-light">
+                        <span>Répartition par Statut</span>
+                    </div>
+                    <div class="card-body">
+                        <canvas id="statusChart" height="200"></canvas>
+                    </div>
+                </div>
+
+                <!-- Matières par Niveau -->
+                <div class="card">
+                    <div class="card-header bg-light">
+                        <span>Top 5 Matières par Niveau</span>
+                    </div>
+                    <div class="card-body">
+                        <ul class="nav nav-tabs" id="levelTabs" role="tablist">
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link active" id="l1-tab" data-bs-toggle="tab" data-bs-target="#l1" type="button" role="tab">L1</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="l2-tab" data-bs-toggle="tab" data-bs-target="#l2" type="button" role="tab">L2</button>
+                            </li>
+                            <li class="nav-item" role="presentation">
+                                <button class="nav-link" id="l3-tab" data-bs-toggle="tab" data-bs-target="#l3" type="button" role="tab">L3</button>
+                            </li>
+                        </ul>
+                        <div class="tab-content p-3 border border-top-0" id="levelTabContent">
+                            <div class="tab-pane fade show active" id="l1" role="tabpanel">
+                                <canvas id="l1Chart" height="200"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="l2" role="tabpanel">
+                                <canvas id="l2Chart" height="200"></canvas>
+                            </div>
+                            <div class="tab-pane fade" id="l3" role="tabpanel">
+                                <canvas id="l3Chart" height="200"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-1"></i> Fermer
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<nav aria-label="Pagination" class="mt-3">
   <ul class="pagination justify-content-center flex-wrap">
     <!-- Ajouter la logique de pagination côté serveur ici -->
     <li class="page-item disabled">
@@ -571,29 +708,115 @@
     </li>
   </ul>
 </nav>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const statsModal = document.getElementById('statsModal');
 
+    statsModal.addEventListener('shown.bs.modal', function() {
+        fetchStatsData();
+    });
 
+    function fetchStatsData() {
+        fetch('/get_stats')
+            .then(response => response.json())
+            .then(data => {
+                updateKPICards(data);
+                renderStatusChart(data);
+                renderLevelCharts(data);
+            })
+            .catch(error => {
+                console.error('Error fetching stats:', error);
+            });
+    }
 
-  <!-- Modal Statistiques (à compléter selon besoins) -->
-  <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <!-- Contenu du modal Statistiques -->
-        <div class="modal-header">
-          <h5 class="modal-title">Statistiques</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-        </div>
-        <div class="modal-body">
-          Contenu des statistiques...
-        </div>
-      </div>
-    </div>
-  </div>
+    function updateKPICards(data) {
+        document.getElementById('totalRec').textContent = data.total;
+        document.getElementById('acceptedRec').textContent = data.accepted;
+        document.getElementById('rejectedRec').textContent = data.rejected;
+        document.getElementById('pendingRec').textContent = data.pending;
+    }
+
+    function renderStatusChart(data) {
+        new Chart(document.getElementById('statusChart'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Accepté', 'Refusé', 'En Attente'],
+                datasets: [{
+                    data: [data.accepted, data.rejected, data.pending],
+                    backgroundColor: ['#4CAF50', '#F44336', '#FFC107'],
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false
+            }
+        });
+    }
+
+    function renderLevelCharts(data) {
+        // L1 Chart
+        new Chart(document.getElementById('l1Chart'), {
+            type: 'bar',
+            data: {
+                labels: data.l1_matieres.map(item => item.code_mat),
+                datasets: [{
+                    label: 'Nombre de Réclamations',
+                    data: data.l1_matieres.map(item => item.count),
+                    backgroundColor: '#3b82f6'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // L2 Chart
+        new Chart(document.getElementById('l2Chart'), {
+            type: 'bar',
+            data: {
+                labels: data.l2_matieres.map(item => item.code_mat),
+                datasets: [{
+                    label: 'Nombre de Réclamations',
+                    data: data.l2_matieres.map(item => item.count),
+                    backgroundColor: '#10b981'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // L3 Chart
+        new Chart(document.getElementById('l3Chart'), {
+            type: 'bar',
+            data: {
+                labels: data.l3_matieres.map(item => item.code_mat),
+                datasets: [{
+                    label: 'Nombre de Réclamations',
+                    data: data.l3_matieres.map(item => item.count),
+                    backgroundColor: '#8b5cf6'
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+    }
+});
+</script>
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const itemsPerPage = 10;
+    const itemsPerPage = 6;
     let currentPage = 1;
     let allRows = Array.from(document.querySelectorAll('tbody tr')); // Capture initiale
     let filteredRows = [...allRows]; // Copie pour manipulation
@@ -618,7 +841,7 @@ document.addEventListener('DOMContentLoaded', () => {
         };
 
         filteredRows = allRows.filter(row => {
-            const rowDateText = row.children[6].textContent.trim();
+            const rowDateText = row.children[5].textContent.trim();
             const rowDate = rowDateText ? new Date(rowDateText) : null;
             const rowDateString = rowDate && !isNaN(rowDate) ? rowDate.toISOString().split('T')[0] : '';
 
@@ -626,14 +849,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 row.children[1].textContent,
                 row.children[2].textContent,
                 row.children[3].textContent,
-                row.children[7].textContent,
-                row.children[8].textContent
+                row.children[4].textContent,
+                row.children[6].textContent,
+                row.children[7].textContent
             ].join(' ').toLowerCase();
 
             const rowData = {
-                matiere: row.children[3].textContent.trim(),
-                niveau: row.children[5].textContent.trim(),
-                departement: row.children[4].textContent.trim(),
+                matiere: row.children[2].textContent.trim(),
+                niveau: row.children[4].textContent.trim(),
+                departement: row.children[3].textContent.trim(),
                 date: rowDateString
             };
 
@@ -651,44 +875,62 @@ document.addEventListener('DOMContentLoaded', () => {
         updateTable();
     }
 
-    // Fonction de pagination
-    function updatePagination() {
-        const pageCount = Math.ceil(filteredRows.length / itemsPerPage);
-        const pagination = document.querySelector('.pagination');
-        pagination.innerHTML = '';
+    // Modifier la fonction updatePagination
+function updatePagination() {
+    const pageCount = Math.ceil(filteredRows.length / itemsPerPage);
+    const pagination = document.querySelector('.pagination');
+    pagination.innerHTML = '';
 
-        // Gestion des boutons
-        const createButton = (icon, disabled, action) => {
-            const li = document.createElement('li');
-            li.className = `page-item ${disabled ? 'disabled' : ''}`;
-            li.innerHTML = `<a class="page-link" href="#">${icon}</a>`;
-            li.querySelector('a').addEventListener('click', action);
-            return li;
-        };
-
-        pagination.appendChild(createButton(
-            '<i class="fas fa-angle-double-left"></i>',
-            currentPage === 1,
-            () => { if(currentPage > 1) currentPage--; updateTable(); }
-        ));
-
-        for(let i=1; i<=pageCount; i++) {
-            const li = document.createElement('li');
-            li.className = `page-item ${i === currentPage ? 'active' : ''}`;
-            li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
-            li.addEventListener('click', () => {
-                currentPage = i;
-                updateTable();
-            });
-            pagination.appendChild(li);
+    // Flèche précédente
+    const prevButton = document.createElement('li');
+    prevButton.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevButton.innerHTML = `
+        <a class="page-link" href="#" aria-label="Previous">
+            <i class="fas fa-angle-left"></i>
+        </a>
+    `;
+    prevButton.querySelector('a').addEventListener('click', (e) => {
+        e.preventDefault();
+        if(currentPage > 1) {
+            currentPage--;
+            updateTable();
+            updatePagination();
         }
+    });
+    pagination.appendChild(prevButton);
 
-        pagination.appendChild(createButton(
-            '<i class="fas fa-angle-double-right"></i>',
-            currentPage === pageCount,
-            () => { if(currentPage < pageCount) currentPage++; updateTable(); }
-        ));
+    // Pages numérotées
+    for(let i = 1; i <= pageCount; i++) {
+        const li = document.createElement('li');
+        li.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        li.innerHTML = `<a class="page-link" href="#">${i}</a>`;
+        li.addEventListener('click', (e) => {
+            e.preventDefault();
+            currentPage = i;
+            updateTable();
+            updatePagination();
+        });
+        pagination.appendChild(li);
     }
+
+    // Flèche suivante
+    const nextButton = document.createElement('li');
+    nextButton.className = `page-item ${currentPage === pageCount ? 'disabled' : ''}`;
+    nextButton.innerHTML = `
+        <a class="page-link" href="#" aria-label="Next">
+            <i class="fas fa-angle-right"></i>
+        </a>
+    `;
+    nextButton.querySelector('a').addEventListener('click', (e) => {
+        e.preventDefault();
+        if(currentPage < pageCount) {
+            currentPage++;
+            updateTable();
+            updatePagination();
+        }
+    });
+    pagination.appendChild(nextButton);
+}
 
     // Mise à jour du tableau
     function updateTable() {
@@ -743,6 +985,156 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     });
 });
+
+</script>
+
+<script>
+// Fonction pour imprimer avec option de masquage des actions
+function printTable(directPrint = false) {
+  const table = document.querySelector('table');
+  const clone = table.cloneNode(true);
+
+  // Supprimer la colonne Actions
+  clone.querySelectorAll('tr').forEach(row => {
+    const cells = row.querySelectorAll('th, td');
+    if (cells.length > 0) cells[cells.length - 1].remove();
+  });
+
+  const printWindow = window.open('', '_blank');
+  printWindow.document.write(`
+    <html>
+      <head>
+        <title>Export des Réclamations</title>
+        <style>
+          body { font-family: Arial; margin: 20px; }
+          h1 { color: #2c3e50; }
+          table { border-collapse: collapse; width: 100%; margin-top: 20px; }
+          th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+          th { background-color: #f2f2f2; }
+          .btn-return {
+            background: #3498db; color: white; padding: 10px 15px;
+            border: none; border-radius: 4px; margin: 20px 0; cursor: pointer;
+          }
+          @media print { .no-print { display: none; } }
+          .status-Accepté { color: green; font-weight: bold; }
+          .status-Refusé { color: red; font-weight: bold; }
+          .status-En attente { color: orange; font-weight: bold; }
+        </style>
+      </head>
+      <body>
+        <div class="no-print">
+          <button class="btn-return" onclick="window.close()">
+            <i class="fas fa-arrow-left"></i> Retour
+          </button>
+        </div>
+        <h1>Liste des Réclamations de ISME- ${new Date().toLocaleDateString()}</h1>
+        ${clone.outerHTML}
+        <script src="https://kit.fontawesome.com/a076d05399.js"><\/script>
+      </body>
+    </html>
+  `);
+  printWindow.document.close();
+
+  // Modifier la fin de la fonction printTable()
+if (directPrint) {
+  printWindow.focus(); // Ajouter cette ligne
+  setTimeout(() => {
+    printWindow.print();
+    // Retirer printWindow.close() pour éviter la fermeture trop rapide
+  }, 1000); // Augmenter le délai
+  }
+}
+
+// Fonction pour exporter en PDF
+// Remplacer la fonction exportToPDF()
+async function exportToPDF() {
+  try {
+    const { jsPDF } = window.jspdf;
+    const pdf = new jsPDF('p', 'mm', 'a4');
+
+    // Récupérer les filtres actuels
+    const filters = {
+      niveau: document.getElementById('niveauSelect').value,
+      departement: document.getElementById('departementSelect').value,
+      matiere: document.getElementById('matiereSelect').value,
+      search: document.querySelector('input[type="text"]').value
+    };
+
+    // Titre dynamique avec les filtres
+    let title = 'Liste des Réclamations';
+    if (filters.niveau !== 'Tous') title += ` | Niveau: ${filters.niveau}`;
+    if (filters.departement !== 'Tous') title += ` | Dépt: ${filters.departement}`;
+    if (filters.matiere !== 'Toutes') title += ` | Matière: ${filters.matiere}`;
+
+    // Récupérer uniquement les lignes visibles (filtrées)
+    const visibleRows = Array.from(document.querySelectorAll('tbody tr'))
+      .filter(row => row.style.display !== 'none');
+
+    // Préparer les données avec couleurs
+    const headers = Array.from(document.querySelectorAll('thead th'))
+                     .map(th => th.innerText)
+                     .filter(text => text !== 'Actions');
+
+    const data = visibleRows.map(row => {
+      const cells = Array.from(row.querySelectorAll('td')).slice(0, -1); // Exclure Actions
+      const statusCell = cells[cells.length - 1]; // Cellule Statut
+      const status = statusCell.textContent.trim();
+
+      // Déterminer la couleur selon le statut
+      let color;
+      switch(status.toLowerCase()) {
+        case 'accepté': color = '#065f46'; break;
+        case 'refusé': color = '#991b1b'; break;
+        case 'en attente': color = '#92400e'; break;
+        default: color = '#000000';
+      }
+
+      return cells.map((cell, index) => {
+        if (index === cells.length - 1) { // Colonne Statut
+          return {
+            content: status,
+            styles: {
+              textColor: color,
+              fontStyle: 'bold'
+            }
+          };
+        }
+        return cell.textContent.trim();
+      });
+    });
+
+    // Configuration du PDF
+    pdf.setFontSize(14);
+    pdf.text(title, 14, 20);
+
+    pdf.autoTable({
+      head: [headers],
+      body: data,
+      startY: 30,
+      styles: { fontSize: 9 },
+      columnStyles: {
+        0: { cellWidth: 10 },
+        8: { cellWidth: 25 }
+      },
+      didParseCell: (data) => {
+        if (data.column.index === 8) { // Appliquer styles uniquement au statut
+          data.cell.styles = data.cell.styles || {};
+          Object.assign(data.cell.styles, data.row.cells[8].styles);
+        }
+      }
+    });
+
+    pdf.save(`reclamations_${new Date().toISOString().slice(0,10)}.pdf`);
+
+  } catch (error) {
+    console.error('Erreur génération PDF:', error);
+    alert('Erreur lors de l\'export PDF');
+  }
+}
+ function getComputedColor(element) {
+  const chip = element.querySelector('.status-chip');
+  return chip ? window.getComputedStyle(chip).color : '#000000';
+}
 </script>
 
 </body>
