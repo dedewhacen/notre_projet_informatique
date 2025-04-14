@@ -1000,35 +1000,166 @@ function printTable(directPrint = false) {
     if (cells.length > 0) cells[cells.length - 1].remove();
   });
 
+  // Récupérer les filtres actuels
+  const searchTerm = document.querySelector('input[type="text"]').value;
+  const matiereValue = document.getElementById('matiereSelect').value;
+  const niveauValue = document.getElementById('niveauSelect').value;
+  const departementValue = document.getElementById('departementSelect').value;
+  const dateValue = document.querySelector('input[type="date"]').value;
+
+  // Vérifier si des filtres sont actifs
+  const isFilterActive = searchTerm !== '' ||
+                        matiereValue !== 'Toutes' ||
+                        niveauValue !== 'Tous' ||
+                        departementValue !== 'Tous' ||
+                        dateValue !== '';
+
+  // Appliquer les filtres sur le clone
+  clone.querySelectorAll('tbody tr').forEach(row => {
+    const cells = row.querySelectorAll('td');
+
+    const rowText = [
+      cells[1].textContent, // matricule
+      cells[2].textContent, // matière
+      cells[3].textContent, // département
+      cells[4].textContent, // niveau
+      cells[6].textContent, // objet
+      cells[7].textContent  // détails
+    ].join(' ').toLowerCase();
+
+    const matchesSearch = rowText.includes(searchTerm.toLowerCase());
+    const matiereMatch = matiereValue === 'Toutes' || cells[2].textContent.trim() === matiereValue;
+    const niveauMatch = niveauValue === 'Tous' || cells[4].textContent.trim() === niveauValue;
+    const departementMatch = departementValue === 'Tous' || cells[3].textContent.trim() === departementValue;
+    const dateMatch = !dateValue || cells[5].textContent.trim() === dateValue;
+
+    const shouldShow = isFilterActive ?
+      (matchesSearch && matiereMatch && niveauMatch && departementMatch && dateMatch) :
+      true;
+
+    row.style.display = shouldShow ? '' : 'none';
+  });
+
   const printWindow = window.open('', '_blank');
   printWindow.document.write(`
     <html>
       <head>
         <title>Export des Réclamations</title>
         <style>
+           /* DEBUT STYLE EN-TÊTE PERSONNALISÉE */
+        .print-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding: 15px 0;
+            position: relative;
+        }
+
+        .header-section {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            width: 45%;
+        }
+
+        .header-logo {
+            max-width: 120px;
+            height: auto;
+            object-fit: contain;
+        }
+
+        .header-text {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .left-section {
+            justify-content: flex-start;
+            text-align: left;
+        }
+
+        .right-section {
+            justify-content: flex-end;
+            text-align: right;
+        }
+
+        .header-title {
+            font-size: 1.3em;
+            font-weight: bold;
+            margin: 0;
+            color: #2c3e50;
+        }
+
+        .header-subtitle {
+            font-size: 1em;
+            margin: 3px 0;
+            color: #34495e;
+        }
+
+        .header-line {
+            border-top: 2px solid #000;
+            margin: 20px auto;
+            width: 90%;
+        }
+          /* FIN STYLE EN-TÊTE */
+
           body { font-family: Arial; margin: 20px; }
-          h1 { color: #2c3e50; }
           table { border-collapse: collapse; width: 100%; margin-top: 20px; }
           th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
           th { background-color: #f2f2f2; }
-          .btn-return {
-            background: #3498db; color: white; padding: 10px 15px;
-            border: none; border-radius: 4px; margin: 20px 0; cursor: pointer;
+          .print-footer {
+            margin-top: 30px;
+            padding-top: 10px;
+            text-align: center;
+            font-size: 0.9em;
           }
-          @media print { .no-print { display: none; } }
-          .status-Accepté { color: green; font-weight: bold; }
-          .status-Refusé { color: red; font-weight: bold; }
-          .status-En attente { color: orange; font-weight: bold; }
         </style>
       </head>
       <body>
-        <div class="no-print">
-          <button class="btn-return" onclick="window.close()">
-            <i class="fas fa-arrow-left"></i> Retour
-          </button>
+        <!-- DEBUT EN-TÊTE PERSONNALISÉE -->
+        <div class="print-header">
+             <!-- Section gauche -->
+        <div class="header-section left-section">
+            <div class="header-logo-container">
+                <img src="{{ url_for('static', filename='ISME.png') }}"
+                     alt="Logo ISME"
+                     class="header-logo">
+                <div class="header-text">
+                    <h3 class="header-title">INSTITUT SUPÉRIEUR</h3>
+                    <h4 class="header-subtitle">DES MÉTIERS DE L'ÉNERGIE</h3>
+                </div>
+            </div>
         </div>
-        <h1>Liste des Réclamations de ISME- ${new Date().toLocaleDateString()}</h1>
+
+        <!-- Section droite -->
+        <div class="header-section right-section">
+            <div class="header-logo-container">
+                <img src="{{ url_for('static', filename='Polytechnique.jpg') }}"
+                     alt="Logo Polytechnique"
+                     class="header-logo">
+                <div class="header-text">
+                    <h4 class="header-title">GROUPE POLYTECHNIQUE</h4>
+                    <h5 class="header-subtitle">D'EXCELLENCE ACADÉMIQUE</h5>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+        <!-- FIN EN-TÊTE -->
+
+        <h1 style="text-align: center;">Liste des Réclamations - ${new Date().toLocaleDateString()}</h1>
+
         ${clone.outerHTML}
+
+        <!-- DEBUT PIED DE PAGE PERSONNALISÉ -->
+        <div class="print-footer">
+          <p>Service des Réclamations - Tél: 01 23 45 67 89 - Email: contact@polytechnique.com</p>
+          <p>Document généré le: ${new Date().toLocaleDateString()}</p>
+        </div>
+        <!-- FIN PIED DE PAGE -->
+
         <script src="https://kit.fontawesome.com/a076d05399.js"><\/script>
       </body>
     </html>

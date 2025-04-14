@@ -419,23 +419,22 @@
 
 
             <!-- Bouton de validation -->
-            <div class="d-flex justify-content-end mt-3">
-              {% if editing_config %}
-<!-- Remplacez la section existante par ceci -->
+            <!-- Supprimer le bouton dans la boucle des niveaux -->
+<!-- Et ajouter cette section à la place de l'ancien bouton -->
 <div class="global-save-container">
+  {% if editing_config %}
   <button class="btn btn-primary global-action-btn" onclick="saveEditedConfig()">
     <i class="fas fa-save me-2"></i>Enregistrer les modifications
   </button>
   <button class="btn btn-secondary global-action-btn" onclick="window.location.href='{{ url_for('parametres_admin') }}#reclamations-actives'">
     <i class="fas fa-times me-2"></i>Annuler
   </button>
+  {% else %}
+  <button class="btn btn-primary global-action-btn" onclick="saveAllConfigs()">
+    <i class="fas fa-save me-2"></i>Enregistrer la configuration
+  </button>
+  {% endif %}
 </div>
-{% else %}
-<button class="btn btn-primary global-action-btn" onclick="saveAllConfigs()">
-  <i class="fas fa-save me-2"></i>Enregistrer
-</button>
-{% endif %}
-      </div>
           </div>
           {% endfor %}
           {% endif %}
