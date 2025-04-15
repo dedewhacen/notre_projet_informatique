@@ -302,9 +302,6 @@
        <a href="#reclamations-actives" class="sidebar-link" onclick="showSection('reclamations-actives')">
          <i class="fas fa-clock me-2"></i>Réclamations Actives
         </a>
-        <a href="#informations" class="sidebar-link" onclick="showSection('informations')">
-          <i class="fas fa-user-cog me-2"></i>Informations personnelles
-        </a>
       </div>
     </nav>
 
@@ -441,55 +438,9 @@
         </div>
       </div>
 
-      <!-- Section Informations personnelles (cachée par défaut) -->
-      <div id="informations" class="config-section" style="display: none;">
-        <div class="config-card">
-          <h4 class="mb-4"><i class="fas fa-user-cog me-2"></i>Informations personnelles</h4>
 
-          <form id="adminInfoForm" method="POST" action="{{ url_for('change_admin_password') }}">
-           <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
-            <div class="row g-3">
-              <div class="col-md-6">
-                <label class="form-label">Email administratif</label>
-                <input type="email" class="form-control" value="{{ user_A[0] }}" readonly>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Dernière connexion</label>
-                <input type="text" class="form-control" value="{{ last_login }}" readonly>
-              </div>
 
-              <div class="col-12">
-                <hr class="my-3">
-              </div>
-
-              <div class="col-md-6">
-                <label class="form-label">Ancien mot de passe</label>
-                <input type="password" class="form-control" id="oldPassword" required>
-              </div>
-              <div class="col-md-6">
-                <label class="form-label">Nouveau mot de passe</label>
-                <div class="input-group">
-                  <input type="password" class="form-control" id="newPassword" required>
-                  <button class="btn btn-outline-secondary" type="button" onclick="generatePassword()">
-                    <i class="fas fa-key"></i> Générer
-                  </button>
-                </div>
-              </div>
-              <div class="col-12">
-                <div class="form-text">Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre.</div>
-              </div>
-
-              <div class="col-12 mt-3">
-                <button type="submit" class="btn btn-primary w-100" >
-                  <i class="fas fa-save me-2"></i>Enregistrer les modifications
-                </button>
-              </div>
-            </div>
-          </form>
-        </div>
-      </div>
-
-        <!-- New section for active claims -->
+        <!-- section for active claims -->
  <div id="reclamations-actives" class="config-section" style="display: none;">
     <div class="config-card">
       <h4 class="mb-4"><i class="fas fa-list-alt me-2"></i>Réclamations Actives</h4>
@@ -926,40 +877,7 @@ document.querySelectorAll('.dept-filter').forEach(btn => {
 });
 
 // Objectif : Générer un mot de passe aléatoire sécurisé de 12 caractères
-function generatePassword() {
-  const chars = "ABCDEFGHJKLMNPQRSTUVWXYZabcdefghjkmnpqrstuvwxyz23456789!@#$%&";
-  let password = "";
 
-  for (let i = 0; i < 12; i++) {
-    password += chars.charAt(Math.floor(Math.random() * chars.length));
-  }
-
-  document.getElementById('newPassword').value = password;
-  alert("Mot de passe généré : " + password + "\nCopiez-le dans un endroit sûr !");
-}
-// Objectif : Gérer la soumission du formulaire de changement de mot de passe admin
-document.getElementById('adminInfoForm').addEventListener('submit', function(e) {
-    e.preventDefault();
-
-    const formData = new FormData(this);
-
-    fetch("{{ url_for('change_admin_password') }}", {
-        method: 'POST',
-        headers: {
-            'X-CSRFToken': document.querySelector('meta[name="csrf-token"]').content
-        },
-        body: formData
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert("Mot de passe changé avec succès !");
-        } else {
-            alert("Erreur : " + data.error);
-        }
-    })
-    .catch(error => console.error('Error:', error));
-});
 // Sauvegarde de la configuration d'un niveau spécifique
 function saveNiveauConfig(niveau) {
   const isActive = document.getElementById(`activate${niveau}`).checked;
@@ -981,22 +899,7 @@ function saveNiveauConfig(niveau) {
   alert(`Configuration pour la Licence ${niveau[-1]} enregistrée !`);
 }
 
-// Validation et soumission du formulaire d'administration
-document.getElementById('adminInfoForm').addEventListener('submit', function(e) {
-  e.preventDefault();
 
-  const oldPassword = document.getElementById('oldPassword').value;
-  const newPassword = document.getElementById('newPassword').value;
-
-  // Vérification de la sécurité du mot de passe
-  if (newPassword.length < 8 || !/[A-Z]/.test(newPassword) || !/[0-9]/.test(newPassword)) {
-    alert("Le mot de passe doit contenir au moins 8 caractères, une majuscule et un chiffre.");
-    return;
-  }
-
-  console.log("Changement de mot de passe:", { oldPassword, newPassword });
-  alert("Mot de passe changé avec succès !");
-});
 
 document.addEventListener('DOMContentLoaded', function() {
   // Intercepter la navigation
