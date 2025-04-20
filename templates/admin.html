@@ -172,6 +172,7 @@
 
 
   <!-- Modal Statistiques (à compléter selon besoins) -->
+  <!-- Modal Statistiques (à compléter selon besoins) -->
   <div class="modal fade" id="statsModal" tabindex="-1" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -228,10 +229,10 @@
                     </div>
                 </div>
 
-                <!-- Matières par Niveau -->
+               <!-- Matières par Niveau -->
                 <div class="card">
                     <div class="card-header bg-light">
-                        <span>Top 5 Matières par Niveau</span>
+                        <span>Top 10 des Matières par Niveau</span>
                     </div>
                     <div class="card-body">
                         <ul class="nav nav-tabs" id="levelTabs" role="tablist">
@@ -246,14 +247,76 @@
                             </li>
                         </ul>
                         <div class="tab-content p-3 border border-top-0" id="levelTabContent">
+                            <!-- L1 -->
                             <div class="tab-pane fade show active" id="l1" role="tabpanel">
-                                <canvas id="l1Chart" height="200"></canvas>
+                                <ul class="nav nav-pills mb-3" id="l1-subtabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="l1-global-tab" data-bs-toggle="pill" data-bs-target="#l1-global" type="button">Global</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="l1-impair-tab" data-bs-toggle="pill" data-bs-target="#l1-impair" type="button">Semestre 1</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="l1-pair-tab" data-bs-toggle="pill" data-bs-target="#l1-pair" type="button">Semestre 2</button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="l1-global" role="tabpanel">
+                                        <canvas id="l1GlobalChart" height="200"></canvas>
+                                    </div>
+                                    <div class="tab-pane fade" id="l1-impair" role="tabpanel">
+                                        <canvas id="l1ImpairChart" height="200"></canvas>
+                                    </div>
+                                    <div class="tab-pane fade" id="l1-pair" role="tabpanel">
+                                        <canvas id="l1PairChart" height="200"></canvas>
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- L2 -->
                             <div class="tab-pane fade" id="l2" role="tabpanel">
-                                <canvas id="l2Chart" height="200"></canvas>
+                                <ul class="nav nav-pills mb-3" id="l2-subtabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="l2-global-tab" data-bs-toggle="pill" data-bs-target="#l2-global" type="button">Global</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="l2-impair-tab" data-bs-toggle="pill" data-bs-target="#l2-impair" type="button">Semestre 3</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="l2-pair-tab" data-bs-toggle="pill" data-bs-target="#l2-pair" type="button">Semestre 4</button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="l2-global" role="tabpanel">
+                                        <canvas id="l2GlobalChart" height="200"></canvas>
+                                    </div>
+                                    <div class="tab-pane fade" id="l2-impair" role="tabpanel">
+                                        <canvas id="l2ImpairChart" height="200"></canvas>
+                                    </div>
+                                    <div class="tab-pane fade" id="l2-pair" role="tabpanel">
+                                        <canvas id="l2PairChart" height="200"></canvas>
+                                    </div>
+                                </div>
                             </div>
+
+                            <!-- L3 -->
                             <div class="tab-pane fade" id="l3" role="tabpanel">
-                                <canvas id="l3Chart" height="200"></canvas>
+                                <ul class="nav nav-pills mb-3" id="l3-subtabs" role="tablist">
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link active" id="l3-global-tab" data-bs-toggle="pill" data-bs-target="#l3-global" type="button">Global</button>
+                                    </li>
+                                    <li class="nav-item" role="presentation">
+                                        <button class="nav-link" id="l3-impair-tab" data-bs-toggle="pill" data-bs-target="#l3-impair" type="button">Semestre 5</button>
+                                    </li>
+                                </ul>
+                                <div class="tab-content">
+                                    <div class="tab-pane fade show active" id="l3-global" role="tabpanel">
+                                        <canvas id="l3GlobalChart" height="200"></canvas>
+                                    </div>
+                                    <div class="tab-pane fade" id="l3-impair" role="tabpanel">
+                                        <canvas id="l3ImpairChart" height="200"></canvas>
+                                    </div>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -335,41 +398,110 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 
     function renderLevelCharts(data) {
+         const TOP_N = 5;
         // L1 Chart
-        new Chart(document.getElementById('l1Chart'), {
-            type: 'bar',
-            data: {
-                labels: data.l1_matieres.map(item => item.code_mat),
-                datasets: [{
-                    label: 'Nombre de Réclamations',
-                    data: data.l1_matieres.map(item => item.count),
-                    backgroundColor: '#3b82f6'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } }
-            }
-        });
+        new Chart(document.getElementById('l1GlobalChart'), {
+  type: 'bar',
+  data: {
+    labels: data.stats.L1.global.map(item => item.code_mat),
+    datasets: [{
+      label: 'Nombre de Réclamations',
+      data: data.stats.L1.global.map(item => item.count)
+    }]
+  },
+  options: { scales: { y: { beginAtZero: true } } }
+});
+
+// L1 Semestre 1 (impair)
+new Chart(document.getElementById('l1ImpairChart'), {
+  type: 'bar',
+  data: {
+    labels: data.stats.L1.impair.map(item => item.code_mat),
+    datasets: [{
+      label: 'Réclamations S1',
+      data: data.stats.L1.impair.map(item => item.count),
+      backgroundColor: '#3b82f6'
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+
+// L1 Semestre 2 (pair)
+new Chart(document.getElementById('l1PairChart'), {
+  type: 'bar',
+  data: {
+    labels: data.stats.L1.pair.map(item => item.code_mat),
+    datasets: [{
+      label: 'Réclamations S2',
+      data: data.stats.L1.pair.map(item => item.count),
+      backgroundColor: '#3b82f6'
+    }]
+  },
+  options: {
+    responsive: true,
+    maintainAspectRatio: false,
+    scales: {
+      y: { beginAtZero: true }
+    }
+  }
+});
+
 
         // L2 Chart
-        new Chart(document.getElementById('l2Chart'), {
-            type: 'bar',
-            data: {
-                labels: data.l2_matieres.map(item => item.code_mat),
-                datasets: [{
-                    label: 'Nombre de Réclamations',
-                    data: data.l2_matieres.map(item => item.count),
-                    backgroundColor: '#10b981'
-                }]
-            },
-            options: {
-                responsive: true,
-                maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } }
-            }
-        });
+        // L2 Global Chart
+new Chart(document.getElementById('l2GlobalChart'), {
+    type: 'bar',
+    data: {
+        labels: data.stats.L2.global.map(item => item.code_mat),
+        datasets: [{
+            label: 'Nombre de Réclamations',
+            data:    data.stats.L2.global.map(item => item.count),
+            backgroundColor: '#10b981'
+        }]
+    },
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        scales: {
+            y: { beginAtZero: true }
+        }
+    }
+});
+// L2 Semestre3 (impair)
+new Chart(document.getElementById('l2ImpairChart'), {
+    type: 'bar',
+    data: {
+        labels: data.stats.L2.impair.map(item => item.code_mat),
+        datasets: [{
+            label: 'Réclamations S3',
+            data:    data.stats.L2.impair.map(item => item.count),
+            backgroundColor: '#10b981'
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+});
+
+// L2 Semestre4(pair)
+new Chart(document.getElementById('l2PairChart'), {
+    type: 'bar',
+    data: {
+        labels: data.stats.L2.pair.map(item => item.code_mat),
+        datasets: [{
+            label: 'Réclamations S4',
+            data:    data.stats.L2.pair.map(item => item.count),
+            backgroundColor: '#10b981'
+        }]
+    },
+    options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+});
+
+
 
         // L3 Chart
         new Chart(document.getElementById('l3Chart'), {

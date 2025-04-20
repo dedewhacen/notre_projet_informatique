@@ -1,38 +1,164 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="h-100">
 <head>
     <meta charset="UTF-8">
-    <!-- Styles communs -->
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="{{ csrf_token() }}">
+    <title>Suivi des Réclamations - ISME</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-      <style>
-    /* En-tête */
-    .admin-gradient {
-      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-      border-bottom: 2px solid rgba(255,255,255,0.1);
-    }
-  </style>
-</head>
-<body>
-<header class="admin-gradient text-white p-3 shadow ">
-    <div class="container-fluid d-flex justify-content-between align-items-center">
-      <div>
-        <h1 class="h4 mb-0">
-          <i class="fas fa-user-shield me-2"></i>Paramètres Administrateur
-        </h1>
-        <small class="text-white-50 opacity-75">Configuration du système de réclamations</small>
-      </div>
-      <!-- Modified header section -->
-<div class="d-flex gap-2 align-items-center">
-    <a href="{{ url_for('admin_dashboard') }}"
-   class="btn btn-light btn-hover-primary btn-sm rounded-pill shadow-sm px-3 py-2 d-flex align-items-center transition-all">
-    <i class="fas fa-home me-2 fs-6"></i>
-    <span class="d-none d-md-inline fw-medium">Aceille</span>
-</a>
-</div>
-    </div>
-  </header>
-<!-- Bannière contextuelle -->
+ <style>
+/* ---------- En-tête avec couleurs allégées et hauteur réduite ---------- */
+.admin-gradient {
+    background: linear-gradient(135deg, #4b79a1 0%, #5e9ad1 50%, #79c2eb 100%);
+    padding: 0.9rem 2.5rem;  /* Réduit la hauteur de l'en-tête */
+    min-height: 100px;  /* Hauteur minimale réduite */
+    border-bottom: 2px solid rgba(255,255,255,0.25);  /* Bordure plus fine */
+    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+}
 
-</body>
-</html>
+.logo-container {
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.95);
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+    border: 2px solid rgba(255,255,255,0.5);
+    transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+    position: relative;
+    overflow: hidden;
+    margin-left: -10px;  /* Décalage du logo vers la gauche */
+}
+
+.logo-container::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: radial-gradient(circle, rgba(255,255,255,0.2) 0%, rgba(255,255,255,0) 70%);
+    pointer-events: none;
+}
+
+.logo-container:hover {
+    transform: scale(1.05) rotate(2deg);
+    box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+    border-color: rgba(255,255,255,0.6);
+}
+
+.brand-logo {
+    height: 56px;
+    width: 56px;
+    object-fit: contain;
+    padding: 4px;
+    transition: transform 0.5s ease;
+    filter: drop-shadow(0 2px 3px rgba(0,0,0,0.08));
+}
+
+.logo-container:hover .brand-logo {
+    transform: scale(1.1);
+}
+
+.brand-title {
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    color: rgba(255,255,255,1);
+    text-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-bottom: 0.1rem;
+    font-size: 1.5rem;
+    position: relative;
+    transition: all 0.3s ease;
+}
+
+/* Suppression de la ligne dynamique sous le titre */
+/* .brand-title::after { ... } supprimé */
+/* .brand-title:hover::after { ... } supprimé */
+
+.brand-subtitle {
+    font-weight: 400;
+    color: rgba(255,255,255,0.95);  /* Couleur éclaircie */
+    font-size: 0.85rem;
+    transition: color 0.3s ease;
+    /* Suppression du style italique pour plus de lisibilité */
+}
+
+.brand-info:hover .brand-subtitle {
+    color: rgba(255,255,255,1);
+}
+
+/* Styles pour les boutons */
+.btn-nouveau {
+    background: #5e9ad1 !important;
+    border: 1px solid rgba(255,255,255,0.4) !important;
+    border-radius: 10px !important;  /* Bordure plus arrondie */
+    padding: 0.65rem 1.3rem !important;  /* Padding légèrement réduit */
+    transition: all 0.3s ease !important;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    font-weight: 500;  /* Police légèrement plus grasse */
+    letter-spacing: 0.2px;  /* Meilleur espacement des lettres */
+}
+
+.btn-nouveau:hover {
+    background: #79c2eb !important;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.15);
+}
+
+.btn-light {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.btn-light:hover {
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+
+.btn-danger {
+    background: #e74c3c !important;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+    transition: all 0.3s ease;
+}
+
+.btn-danger:hover {
+    background: #e95c4d !important;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+    transform: translateY(-1px);
+}
+</style>
+</head>
+<body class="d-flex flex-column h-100 bg-light">
+
+<header class="admin-gradient text-white shadow-sm">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center py-1">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='LOGO.jpg') }}"
+                         alt="Logo ISME"
+                         class="brand-logo">
+                </div>
+                <div class="brand-info">
+                    <h1 class="brand-title mb-0">Gestion des Réclamations</h1>
+                    <div class="brand-subtitle">Institut Supérieur des Métiers de l'Entreprise</div>
+                </div>
+            </div>
+
+            <div class="d-flex align-items-center gap-3">
+                <a href="{{ url_for('admin_dashboard') }}"
+                   class="btn btn-light btn-sm rounded-pill"
+                   title="Accueil">
+                    <i class="fas fa-home me-1"></i>
+                    Accueil
+                </a>
+
+                <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm rounded-pill" title="Déconnexion">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="d-none d-md-inline ms-1">Déconnexion</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Le reste du code HTML reste inchangé -->

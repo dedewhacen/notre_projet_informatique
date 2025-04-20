@@ -311,13 +311,14 @@ def update_status():
         conn.rollback()
         return jsonify(success=False, error=str(e)), 500
 
+
 @app.route('/get_stats')
 def get_stats():
     if not session.get('logged_in') or session.get('role') != 'admin':
         abort(403)
 
     try:
-        # 1. Basic counts
+        # 1. Comptes de base
         cursor.execute("SELECT COUNT(*) FROM reclamation")
         total = cursor.fetchone()[0]
 
@@ -326,37 +327,60 @@ def get_stats():
         for status, count in cursor.fetchall():
             status_counts[status] = count
 
-        # 2. Top matieres by level
-        def get_top_matieres_by_level(level):
-            cursor.execute("""
+        # 2. Top matières par niveau et semestre
+        def get_top_matieres(level, semestre=None, limit=10):
+            query = """
                 SELECT r.code_mat, COUNT(*) as count 
                 FROM reclamation r
                 JOIN matiere m ON r.code_mat = m.code_mat
                 WHERE m.niveau_de_licence = %s
+            """
+            params = [level]
+
+            if semestre:
+                query += " AND m.semestre = %s"
+                params.append(semestre)
+
+            query += """
                 GROUP BY r.code_mat 
                 ORDER BY count DESC 
-                LIMIT 5
-            """, (level,))
+                LIMIT %s
+            """
+            params.append(limit)
+
+            cursor.execute(query, tuple(params))
             return [{'code_mat': row[0], 'count': row[1]} for row in cursor.fetchall()]
 
-        l1_matieres = get_top_matieres_by_level('L1')
-        l2_matieres = get_top_matieres_by_level('L2')
-        l3_matieres = get_top_matieres_by_level('L3')
+        # Pour chaque niveau: semestre impair, pair et global
+        stats = {
+            'L1': {
+                'impair': get_top_matieres('L1', 'S1', 5),
+                'pair': get_top_matieres('L1', 'S2', 5),
+                'global': get_top_matieres('L1', None, 5)
+            },
+            'L2': {
+                'impair': get_top_matieres('L2', 'S3', 5),
+                'pair': get_top_matieres('L2', 'S4', 5),
+                'global': get_top_matieres('L2', None, 5)
+            },
+            'L3': {
+                'impair': get_top_matieres('L3', 'S5', 5),
+                'pair': [],  # L3 n'a pas de semestre pair
+                'global': get_top_matieres('L3', None, 5)
+            }
+        }
 
         return jsonify({
             'total': total,
             'accepted': status_counts['Accepté'],
             'rejected': status_counts['Refusé'],
             'pending': status_counts['En attente'],
-            'l1_matieres': l1_matieres,
-            'l2_matieres': l2_matieres,
-            'l3_matieres': l3_matieres
+            'stats': stats
         })
 
     except Exception as e:
         app.logger.error(f"Error generating stats: {str(e)}")
         return jsonify({'error': 'Unable to generate statistics'}), 500
-
 #parametre de l'dmin
 
 # Paramètres du compte admin
