@@ -14,9 +14,16 @@
 
         body {
             background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
-                        url('{{ url_for('static', filename='polytechnique.jpg') }}') no-repeat center center fixed;
+                        url('{{ url_for('static', filename='ISME.png') }}') no-repeat center center fixed;
+            background-position: center center;
             background-size: cover;
+
+            background-size: contain;
+            background-attachment: scroll;
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            position: relative;
             display: flex;
             flex-direction: column;
         }

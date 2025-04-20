@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des Étudiants - ISME</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* Suppression complète des marges */
+body {
+    padding-top: 0 !important;
+}
+        /* Messages flash améliorés */
+        .alert-animated {
+            animation: slideIn 0.3s ease-out, fadeOut 0.3s ease-out 4s forwards;
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            min-width: 300px;
+            z-index: 10000;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            border: none;
+        }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); }
+            to { transform: translateX(0); }
+        }
+
+        @keyframes fadeOut {
+            from { opacity: 1; }
+            to { opacity: 0; }
+        }
+
+        .alert i {
+            font-size: 1.4em;
+            margin-right: 12px;
+        }
+
+        /* Amélioration tableau */
+        .table-admin td, .table-admin th {
+            vertical-align: middle;
+        }
+
+        /* Bouton responsive */
+        @media (max-width: 768px) {
+            .btn-sm span {
+                display: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    {% include 'header_admin.html' %}
+
+
+    <!-- Conteneur des messages flash -->
+    <div class="flash-container">
+        {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+                {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show alert-animated">
+                        <div class="d-flex align-items-center">
+                            {% if category == 'success' %}
+                                <i class="fas fa-check-circle"></i>
+                            {% elif category == 'danger' %}
+                                <i class="fas fa-times-circle"></i>
+                            {% elif category == 'warning' %}
+                                <i class="fas fa-exclamation-triangle"></i>
+                            {% else %}
+                                <i class="fas fa-info-circle"></i>
+                            {% endif %}
+                            <div>
+                                <h6 class="mb-0">{{ message|safe }}</h6>
+                            </div>
+                        </div>
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                {% endfor %}
+            {% endif %}
+        {% endwith %}
+    </div>
+
+    <main class="container-fluid px-4 mt-4">
+        <!-- Barre d'outils modifiée -->
+        <div class="toolbar-container mb-4">
+            <div class="row g-3 align-items-center">
+                <div class="col-md-3">
+                    <div class="input-group">
+                        <input type="text" class="form-control" placeholder="Rechercher une matière...">
+                    </div>
+                </div>
+
+                <!-- Dans la barre d'outils -->
+            <div class="col-md-4">
+                <div class="d-flex gap-2">
+                    <select class="form-select" id="filterNiveau">
+                        <option value="">Tous niveaux</option>
+                        <option value="L1" {% if request.args.get('niveau') == 'L1' %}selected{% endif %}>L1</option>
+                        <option value="L2" {% if request.args.get('niveau') == 'L2' %}selected{% endif %}>L2</option>
+                        <option value="L3" {% if request.args.get('niveau') == 'L3' %}selected{% endif %}>L3</option>
+                    </select>
+                    <select class="form-select" id="filterSemestre">
+                        <option value="">Tous semestres</option>
+                        <!-- Les options seront générées dynamiquement -->
+                    </select>
+                </div>
+            </div>
+
+                <div class="col-md-5 text-end">
+                    <button class="btn btn-success btn-sm" data-bs-toggle="modal" data-bs-target="#addMatiereModal">
+                        <i class="fas fa-plus me-2"></i>Ajouter
+                    </button>
+                    <button class="btn btn-danger btn-sm" id="deleteSelected">
+                        <i class="fas fa-trash-alt me-2"></i>Supprimer
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tableau des matières -->
+        <table class="table table-admin table-hover align-middle">
+            <thead>
+                <tr>
+                    <th><input type="checkbox" id="selectAll"></th>
+                    <th>Code Matière</th>
+                    <th>Niveau</th>
+                    <th>Semestre</th>
+                    <th>Type</th>
+                    <th class="text-center">Actions</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for matiere in matieres %}
+                <tr>
+                    <td><input type="checkbox" class="matiere-check" name="matieres[]" value="{{ matiere.code_mat }}"></td>
+                    <td>{{ matiere.code_mat }}</td>
+                    <td>{{ matiere.niveau_de_licence }}</td>
+                     <td>{{ matiere.semestre }}</td>
+                    <td>{{ matiere.dept_mat }}</td>
+                    <td class="text-center">
+                        <button class="btn btn-sm btn-outline-primary"
+                                data-bs-toggle="modal"
+                                data-bs-target="#editMatiereModal"
+                                data-code="{{ matiere.code_mat }}"
+                                data-niveau="{{ matiere.niveau_de_licence }}"
+                                data-semestre="{{ matiere.semestre }}"
+                                data-dept="{{ matiere.dept_mat }}">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+       <!-- Pagination -->
+        <!-- Pagination -->
+            <nav aria-label="Pagination">
+                <ul class="pagination justify-content-center">
+                    <li class="page-item {% if pagination.page == 1 %}disabled{% endif %}">
+                        <a class="page-link"
+                           href="?page={{ pagination.page - 1 }}{% if request.args.get('niveau') %}&niveau={{ request.args.niveau }}{% endif %}{% if request.args.get('semestre') %}&semestre={{ request.args.semestre }}{% endif %}">
+                            Précédent
+                        </a>
+                    </li>
+                    {% for p in range(1, pagination.pages + 1) %}
+                    <li class="page-item {% if p == pagination.page %}active{% endif %}">
+                        <a class="page-link"
+                           href="?page={{ p }}{% if request.args.get('niveau') %}&niveau={{ request.args.niveau }}{% endif %}{% if request.args.get('semestre') %}&semestre={{ request.args.semestre }}{% endif %}">
+                            {{ p }}
+                        </a>
+                    </li>
+                    {% endfor %}
+                    <li class="page-item {% if pagination.page >= pagination.pages %}disabled{% endif %}">
+                        <a class="page-link"
+                           href="?page={{ pagination.page + 1 }}{% if request.args.get('niveau') %}&niveau={{ request.args.niveau }}{% endif %}{% if request.args.get('semestre') %}&semestre={{ request.args.semestre }}{% endif %}">
+                            Suivant
+                        </a>
+                    </li>
+                </ul>
+            </nav>
+    </main>
+
+    <!-- Modal Ajout Matière -->
+    <div class="modal fade" id="addMatiereModal">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header admin-gradient text-white">
+                    <h5 class="modal-title"><i class="fas fa-book me-2"></i>Nouvelle matière</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+
+                <form method="POST" action="{{ url_for('gestion_matieres') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                    <input type="hidden" name="add_matiere" value="true">
+                    <div class="modal-body">
+                        <!-- Dans le modal d'ajout (addMatiereModal) -->
+                        <div class="mb-3">
+                            <label>Code matière</label>
+                            <input type="text" class="form-control" name="code"
+                                   required
+                                   pattern="[A-Z0-9]{4,10}"
+                                   oninput="this.value = this.value.toUpperCase()"
+                                   title="4 à 10 caractères alphanumériques en majuscules">
+                        </div>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label>Niveau</label>
+                                <select class="form-select" name="niveau" required>
+                                    <option value="L1">L1</option>
+                                    <option value="L2">L2</option>
+                                    <option value="L3">L3</option>
+                                </select>
+                            </div>
+                            <div class="col-md-6">
+                                <label>Semestre</label>
+                                <select class="form-select" name="semestre" required>
+                                    <option value="S1">S1</option>
+                                    <option value="S2">S2</option>
+                                    <option value="S3">S3</option>
+                                    <option value="S4">S4</option>
+                                    <option value="S5">S5</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label>Type</label>
+                                <select class="form-select" name="dept" required>
+                                    <option value="GCGP">GCGP</option>
+                                    <option value="GEER">GEER</option>
+                                    <option value="COMN">COMN</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="modal-footer">
+                        <button type="submit" class="btn btn-success">Enregistrer</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Modification Matière -->
+    <!-- Modal Modification Matière -->
+<div class="modal fade" id="editMatiereModal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header admin-gradient text-white">
+                <h5 class="modal-title"><i class="fas fa-edit me-2"></i>Modifier la matière</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <form method="POST" action="{{ url_for('gestion_matieres') }}">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <input type="hidden" name="edit_matiere" value="true">
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label>Code matière</label>
+                        <!-- Dans le modal d'ajout -->
+<input type="text" class="form-control" name="code"
+       required
+       pattern="[A-Z0-9]{4,10}"
+       oninput="this.value = this.value.toUpperCase()"
+       title="4 à 10 caractères alphanumériques en majuscules">
+                    </div>
+                    <div class="row g-3">
+                        <div class="col-md-6">
+                            <label>Niveau</label>
+                            <select class="form-select" name="niveau" required>
+                                <option value="L1">L1</option>
+                                <option value="L2">L2</option>
+                                <option value="L3">L3</option>
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label>Semestre</label>
+                            <select class="form-select" name="semestre" required>
+                                <option value="S1">S1</option>
+                                <option value="S2">S2</option>
+                                <option value="S3">S3</option>
+                                <option value="S4">S4</option>
+                                <option value="S5">S5</option>
+                            </select>
+                        </div>
+                        <div class="col-12">
+                            <label>Type</label>
+                            <select class="form-select" name="dept" required>
+                                <option value="GCGP">GCGP</option>
+                                <option value="GEER">GEER</option>
+                                <option value="COMN">COMN</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-primary">Mettre à jour</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+
+
+<!-- Modal de confirmation de suppression -->
+    <div class="modal fade" id="deleteConfirmModal" tabindex="-1">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-danger text-white">
+                    <h5 class="modal-title"><i class="fas fa-trash-alt me-2"></i>Confirmation</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="d-flex align-items-center">
+                        <i class="fas fa-exclamation-triangle text-danger fs-3 me-3"></i>
+                        <div>
+                            <h5>Êtes-vous sûr de vouloir supprimer <span id="deleteCount">0</span> étudiant(s) ?</h5>
+                            <p class="text-muted mb-0">Cette action est irréversible !</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Annuler</button>
+                    <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+                        <i class="fas fa-trash-alt me-2"></i>Confirmer
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Gestion des filtres niveau/semestre
+    const niveauSelect = document.getElementById('filterNiveau');
+    const semestreSelect = document.getElementById('filterSemestre');
+    const niveauSemestreMap = {
+        'L1': ['S1', 'S2'],
+        'L2': ['S3', 'S4'],
+        'L3': ['S5']
+    };
+
+    // Fonctionnalité de sélection globale
+    document.getElementById('selectAll').addEventListener('change', function(e) {
+        document.querySelectorAll('.matiere-check').forEach(checkbox => {
+            checkbox.checked = e.target.checked;
+        });
+    });
+
+    // Mise à jour des options de semestre
+    function updateSemestreOptions() {
+        const selectedNiveau = niveauSelect.value;
+        const currentSemestre = new URLSearchParams(window.location.search).get('semestre');
+        const tousOption = semestreSelect.querySelector('option[value=""]');
+
+        semestreSelect.innerHTML = '';
+        semestreSelect.appendChild(tousOption);
+
+        if (selectedNiveau && niveauSemestreMap[selectedNiveau]) {
+            niveauSemestreMap[selectedNiveau].forEach(semestre => {
+                const option = document.createElement('option');
+                option.value = semestre;
+                option.textContent = semestre;
+                option.selected = semestre === currentSemestre;
+                semestreSelect.appendChild(option);
+            });
+        }
+    }
+
+    // Mise à jour de l'URL et filtres
+    function updateUrlFilters() {
+        const params = new URLSearchParams(window.location.search);
+        params.set('niveau', niveauSelect.value || '');
+        params.set('semestre', semestreSelect.value || '');
+        params.set('page', 1);
+        window.location.search = params.toString();
+    }
+
+    // Filtrage client-side
+    function applyTableFilters() {
+        const niveauValue = niveauSelect.value;
+        const semestreValue = semestreSelect.value;
+        const rows = document.querySelectorAll('.table-admin tbody tr');
+
+        rows.forEach(row => {
+            const niveau = row.cells[2].textContent;
+            const semestre = row.cells[3].textContent;
+            row.style.display = (niveau === niveauValue || !niveauValue) &&
+                              (semestre === semestreValue || !semestreValue)
+                              ? '' : 'none';
+        });
+    }
+
+    // Gestion des événements filtres
+    niveauSelect.addEventListener('change', () => {
+        semestreSelect.value = '';
+        updateSemestreOptions();
+        updateUrlFilters();
+    });
+
+    semestreSelect.addEventListener('change', updateUrlFilters);
+    niveauSelect.addEventListener('change', applyTableFilters);
+    semestreSelect.addEventListener('change', applyTableFilters);
+
+    // Suppression des matières
+    document.getElementById('deleteSelected').addEventListener('click', function() {
+        const selected = document.querySelectorAll('.matiere-check:checked');
+        if (selected.length > 0) {
+            document.getElementById('deleteCount').textContent = selected.length;
+            new bootstrap.Modal('#deleteConfirmModal').show();
+        }
+    });
+
+    // Confirmation de suppression
+    document.getElementById('confirmDeleteBtn').addEventListener('click', function() {
+        const selected = Array.from(document.querySelectorAll('.matiere-check:checked'))
+                            .map(checkbox => checkbox.value);
+
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = "{{ url_for('gestion_matieres') }}";
+
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrf_token';
+        csrf.value = "{{ csrf_token() }}";
+        form.appendChild(csrf);
+
+        selected.forEach(code => {
+            const input = document.createElement('input');
+            input.type = 'hidden';
+            input.name = 'matieres_suppr';
+            input.value = code;
+            form.appendChild(input);
+        });
+
+        document.body.appendChild(form);
+        form.submit();
+    });
+
+    // Pré-remplissage modal d'édition
+    document.querySelectorAll('[data-bs-target="#editMatiereModal"]').forEach(btn => {
+        btn.addEventListener('click', () => {
+            const modal = document.querySelector('#editMatiereModal');
+            const niveau = btn.dataset.niveau;
+
+            modal.querySelector('[name="code"]').value = btn.dataset.code;
+            modal.querySelector('[name="niveau"]').value = niveau;
+            modal.querySelector('[name="dept"]').value = btn.dataset.dept;
+
+            // Mise à jour dynamique des semestres
+            const semestreSelect = modal.querySelector('[name="semestre"]');
+            semestreSelect.innerHTML = '';
+
+            const semestres = niveau === 'L1' ? ['S1', 'S2'] :
+                             niveau === 'L2' ? ['S3', 'S4'] :
+                             ['S5'];
+
+            semestres.forEach(s => {
+                const option = document.createElement('option');
+                option.value = s;
+                option.textContent = s;
+                option.selected = s === btn.dataset.semestre;
+                semestreSelect.appendChild(option);
+            });
+        });
+    });
+
+    // Validation formulaire d'ajout
+    // Remplacer la validation existante par :
+        document.querySelector('#addMatiereModal form').addEventListener('submit', function(e) {
+            const codeInput = this.querySelector('[name="code"]');
+            const codeValue = codeInput.value.trim();
+
+            if (!/^[A-Z0-9]{4,10}$/.test(codeValue)) {
+                e.preventDefault();
+                codeInput.focus();
+                // Le message natif du navigateur sera affiché grâce à l'attribut pattern
+            }
+        });
+
+    // Initialisation
+    updateSemestreOptions();
+    applyTableFilters();
+});
+</script>
+</body>
+</html>
