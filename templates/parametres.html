@@ -1,158 +1,260 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" class="h-100">
 <head>
-    {% block head %}
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Paramètres</title>
+    <title>Paramètres Étudiant - ISME</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/styles.css') }}">
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    {% endblock %}
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+            .btn-theme-blue {
+        background: linear-gradient(135deg, #3B82F6 0%, #2563EB 100%);
+        border-color: #2563EB;
+        color: white !important;
+        transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(59, 130, 246, 0.2);
+    }
+
+    .btn-theme-blue:hover {
+        background: linear-gradient(135deg, #2563EB 0%, #1D4ED8 100%);
+        border-color: #1D4ED8;
+        transform: translateY(-1px);
+        box-shadow: 0 10px 15px -3px rgba(59, 130, 246, 0.3);
+    }
+
+    .btn-theme-blue:active {
+        transform: translateY(1px);
+        box-shadow: 0 2px 4px -1px rgba(59, 130, 246, 0.2);
+    }
+
+    .btn-theme-blue::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: rgba(255, 255, 255, 0.1);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        border-radius: 8px;
+    }
+
+    .btn-theme-blue:hover::before {
+        opacity: 1;
+    }
 
 
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-  <style>
-      header.admin-gradient {
-    padding: 1.5rem 0;  /* 2rem en haut et en bas */
-}
-      .bg-light[readonly] {
-    background-color: #f8f9fa !important;
-    border-color: #dee2e6;
-    opacity: 0.8;
-}
-    .admin-gradient {
-      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-      border-bottom: 2px solid rgba(255,255,255,0.1);
-    }
-    .status-chip {
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      width: fit-content;
-    }
-    .scrollable-admin {
-      max-height: calc(100vh - 280px);
-      overflow-y: auto;
-    }
-    /* Bouton d'action individuel */
-    .btn-action-trigger {
-      background: rgba(0,0,0,0.05);
-      border: 1px solid rgba(0,0,0,0.1);
-      padding: 0.25rem 0.75rem;
-      transition: all 0.3s ease;
-    }
-    .btn-action-trigger:hover {
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    /* Panneau d'action pour chaque ligne */
-    .action-panel {
-      position: absolute;
-      right: 0;
-      top: 100%;
-      width: 220px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(10px);
-      transition: all 0.3s ease;
-      z-index: 1050;
-    }
-    .action-panel.show {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-    }
-    .action-header {
-      padding: 0.5rem 1rem;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .action-body {
-      padding: 0.5rem 0;
-    }
-    .action-item {
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .action-item:hover {
-      background: rgba(0,0,0,0.05);
-    }
-    /* Styles pour le menu global Outils */
-    .dropdown-menu {
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 8px;
-    }
-    .dropdown-item {
-      padding: 0.5rem 1rem;
-      transition: background 0.2s;
-    }
-    .dropdown-item:hover {
-      background: #f8f9fa;
-    }
-  </style>
+
+
+
+
+        .theme-bg-light-blue {
+            background-color: #f0f8ff !important;
+        }
+
+        .theme-border-blue {
+            border-color: #b3d9ff !important;
+        }
+
+        .theme-text-blue {
+            color: #2a6db0 !important;
+        }
+
+        .btn-theme-blue {
+            background-color: #4d94ff;
+            border-color: #4d94ff;
+            color: white !important;
+        }
+
+        .btn-theme-blue:hover {
+            background-color: #3377cc;
+            border-color: #3377cc;
+        }
+
+        .progress-bar-blue {
+            background-color: #66b3ff !important;
+        }
+
+        .icon-wrapper {
+            background: linear-gradient(145deg, #e6f2ff, #cce6ff);
+            width: 45px;
+            height: 45px;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+    </style>
 </head>
-<body class="d-flex flex-column h-100 bg-light">
-{% include 'header.html' %}
+<body class="bg-light">
+{% include 'heder_etud.html' %}
 
-<div class="container mt-5">
-    <!-- Section Informations du compte -->
-    <div class="card mb-4 shadow">
-        <div class="card-header bg-primary text-white">
-            <i class="fas fa-user-circle me-2"></i>Informations du compte
+<main class="container my-5">
+    <!-- Messages flash -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                        <div class="alert alert-{{ category }} alert-dismissible fade show mb-4">
+                            {{ message }}
+                            <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                        </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
         </div>
-        <div class="card-body">
-            <div class="mb-4">
-                <label class="form-label fw-bold">Adresse email</label>
-                <input type="email"
-                       class="form-control bg-light"
-                       value="{{ user[0] }}"
-                       readonly
-                       style="cursor: not-allowed">
-                <small class="text-muted">Vous ne pouvez pas modifier votre adresse email</small>
+    </div>
+
+    <!-- Carte principale -->
+    <div class="row justify-content-center">
+        <div class="col-lg-8">
+            <div class="card border-0 theme-border-blue rounded-4 overflow-hidden shadow-lg">
+                <!-- En-tête -->
+                <div class="card-header theme-bg-light-blue py-4 border-bottom theme-border-blue">
+                    <div class="d-flex align-items-center gap-3">
+                        <div class="icon-wrapper">
+                            <i class="fas fa-user-cog fa-lg theme-text-blue"></i>
+                        </div>
+                        <div>
+                            <h2 class="h4 mb-0 theme-text-blue">Gestion du compte étudiant</h2>
+                            <p class="text-muted mb-0">{{ user[0] }}</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Corps du formulaire -->
+                <div class="card-body p-4 theme-bg-light-blue">
+                    <form method="POST" action="{{ url_for('change_student_password') }}">
+                        <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                        <!-- Section Sécurité -->
+                        <div class="mb-4">
+                            <h4 class="h5 mb-4 theme-text-blue d-flex align-items-center gap-2">
+                                <i class="fas fa-shield-alt"></i>
+                                Sécurité du compte
+                            </h4>
+
+                            <!-- Email -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold theme-text-blue">Adresse email</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-white theme-border-blue">
+                                        <i class="fas fa-envelope theme-text-blue"></i>
+                                    </span>
+                                    <input type="email" class="form-control form-control-lg bg-white theme-border-blue"
+                                           value="{{ user[0] }}" readonly>
+                                </div>
+                            </div>
+
+                            <!-- Ancien mot de passe -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold theme-text-blue">Ancien mot de passe</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-white theme-border-blue">
+                                        <i class="fas fa-key theme-text-blue"></i>
+                                    </span>
+                                    <input type="password" class="form-control form-control-lg theme-border-blue"
+                                           name="old_password" required>
+                                    <button type="button" class="btn btn-light theme-border-blue toggle-password">
+                                        <i class="fas fa-eye theme-text-blue"></i>
+                                    </button>
+                                </div>
+                            </div>
+
+                            <!-- Nouveau mot de passe -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold theme-text-blue">Nouveau mot de passe</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-white theme-border-blue">
+                                        <i class="fas fa-lock theme-text-blue"></i>
+                                    </span>
+                                    <input type="password" class="form-control form-control-lg theme-border-blue"
+                                           name="new_password" id="newPassword" required>
+                                    <button type="button" class="btn btn-light theme-border-blue toggle-password">
+                                        <i class="fas fa-eye theme-text-blue"></i>
+                                    </button>
+                                </div>
+                                <div class="mt-3">
+                                    <div class="progress theme-border-blue" style="height: 6px;">
+                                        <div id="passwordStrength" class="progress-bar progress-bar-blue"></div>
+                                    </div>
+                                    <div class="mt-3 d-flex flex-wrap gap-2">
+                                        <span class="badge bg-white theme-border-blue theme-text-blue">
+                                            <i id="lengthCheck" class="fas fa-check-circle me-1"></i>8+ caractères
+                                        </span>
+                                        <span class="badge bg-white theme-border-blue theme-text-blue">
+                                            <i id="upperCheck" class="fas fa-check-circle me-1"></i>1 majuscule
+                                        </span>
+                                        <span class="badge bg-white theme-border-blue theme-text-blue">
+                                            <i id="numberCheck" class="fas fa-check-circle me-1"></i>1 chiffre
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Confirmation -->
+                            <div class="mb-4">
+                                <label class="form-label fw-bold theme-text-blue">Confirmation</label>
+                                <div class="input-group input-group-lg">
+                                    <span class="input-group-text bg-white theme-border-blue">
+                                        <i class="fas fa-redo theme-text-blue"></i>
+                                    </span>
+                                    <input type="password" class="form-control form-control-lg theme-border-blue"
+                                           name="confirm_password" required>
+                                </div>
+                            </div>
+
+                            <!-- Boutons -->
+                            <div class="d-flex gap-2 justify-content-end mt-5">
+                                <button type="reset" class="btn btn-outline-secondary px-4 py-2">
+                                    <i class="fas fa-undo me-2"></i>Réinitialiser
+                                </button>
+                                <button type="submit" class="btn btn-theme-blue px-4 py-2">
+                                    <i class="fas fa-save me-2"></i>Enregistrer
+                                </button>
+
+                            </div>
+                        </div>
+                    </form>
+                </div>
             </div>
         </div>
     </div>
+</main>
 
-    <!-- Section Sécurité -->
-    <div class="card mb-4 shadow">
-        <div class="card-header bg-warning text-dark">
-            <i class="fas fa-shield-alt me-2"></i>Sécurité
-        </div>
-        <div class="card-body">
-            <form action="{{ url_for('change_password') }}" method="POST">
-                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-                <div class="mb-3">
-                    <label class="form-label fw-bold">Ancien mot de passe</label>
-                    <input type="password"
-                           class="form-control"
-                           name="old_password"
-                           required
-                           placeholder="••••••••">
-                </div>
-                <div class="mb-4">
-                    <label class="form-label fw-bold">Nouveau mot de passe</label>
-                    <input type="password"
-                           class="form-control"
-                           name="new_password"
-                           required
-                           placeholder="••••••••">
-                    <small class="text-muted">Minimum 8 caractères</small>
-                </div>
-                <button type="submit" class="btn btn-danger">
-                    <i class="fas fa-sync-alt me-2"></i>Changer le mot de passe
-                </button>
-            </form>
-        </div>
-    </div>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+document.querySelectorAll('.toggle-password').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const input = btn.previousElementSibling;
+        input.type = input.type === 'password' ? 'text' : 'password';
+        btn.querySelector('i').classList.toggle('fa-eye-slash');
+    });
+});
 
-</div>
+document.getElementById('newPassword').addEventListener('input', function(e) {
+    const pass = e.target.value;
+    const checks = {
+        length: pass.length >= 8,
+        upper: /[A-Z]/.test(pass),
+        number: /\d/.test(pass)
+    };
+
+    Object.keys(checks).forEach(check => {
+        const icon = document.getElementById(check + 'Check');
+        icon.className = checks[check] ?
+            'fas fa-check-circle text-success me-1' :
+            'fas fa-times-circle text-danger me-1';
+    });
+
+    const strength = Object.values(checks).filter(v => v).length;
+    const bar = document.getElementById('passwordStrength');
+    bar.style.width = (strength/3)*100 + '%';
+    bar.className = 'progress-bar ' + (strength < 2 ? 'bg-danger' : strength < 3 ? 'bg-warning' : 'progress-bar-blue');
+});
+</script>
 </body>
 </html>

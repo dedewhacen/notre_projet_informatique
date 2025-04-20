@@ -8,13 +8,13 @@
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
  <style>
-/* ---------- En-tête avec couleurs allégées et hauteur réduite ---------- */
+/* ---------- En-tête avec couleurs allégées ---------- */
 .admin-gradient {
     background: linear-gradient(135deg, #4b79a1 0%, #5e9ad1 50%, #79c2eb 100%);
-    padding: 0.9rem 2.5rem;  /* Réduit la hauteur de l'en-tête */
-    min-height: 70px;  /* Hauteur minimale réduite */
-    border-bottom: 2px solid rgba(255,255,255,0.25);  /* Bordure plus fine */
-    box-shadow: 0 3px 8px rgba(0,0,0,0.08);
+    padding: 1.2rem 2.5rem;
+    min-height: 80px;
+    border-bottom: 3px solid rgba(255,255,255,0.25);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.08);
 }
 
 .logo-container {
@@ -26,7 +26,6 @@
     transition: all 0.35s cubic-bezier(0.25, 0.46, 0.45, 0.94);
     position: relative;
     overflow: hidden;
-    margin-left: -10px;  /* Décalage du logo vers la gauche */
 }
 
 .logo-container::after {
@@ -70,16 +69,31 @@
     transition: all 0.3s ease;
 }
 
-/* Suppression de la ligne dynamique sous le titre */
-/* .brand-title::after { ... } supprimé */
-/* .brand-title:hover::after { ... } supprimé */
+.brand-title::after {
+    content: '';
+    position: absolute;
+    bottom: -4px;
+    left: 0;
+    width: 60px;
+    height: 2px;
+    background: rgba(255,255,255,0.7);
+    border-radius: 2px;
+    transform: scaleX(0.6);
+    transform-origin: left;
+    transition: transform 0.3s ease, background-color 0.3s ease;
+}
+
+.brand-title:hover::after {
+    transform: scaleX(1);
+    background: rgba(255,255,255,0.9);
+}
 
 .brand-subtitle {
     font-weight: 400;
-    color: rgba(255,255,255,0.95);  /* Couleur éclaircie */
+    color: rgba(255,255,255,0.85);
     font-size: 0.85rem;
+    font-style: italic;
     transition: color 0.3s ease;
-    /* Suppression du style italique pour plus de lisibilité */
 }
 
 .brand-info:hover .brand-subtitle {
@@ -89,13 +103,11 @@
 /* Styles pour les boutons */
 .btn-nouveau {
     background: #5e9ad1 !important;
-    border: 1px solid rgba(255,255,255,0.4) !important;
-    border-radius: 10px !important;  /* Bordure plus arrondie */
-    padding: 0.65rem 1.3rem !important;  /* Padding légèrement réduit */
+    border: 2px solid rgba(255,255,255,0.3) !important;
+    border-radius: 8px !important;
+    padding: 0.75rem 1.5rem !important;
     transition: all 0.3s ease !important;
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    font-weight: 500;  /* Police légèrement plus grasse */
-    letter-spacing: 0.2px;  /* Meilleur espacement des lettres */
 }
 
 .btn-nouveau:hover {
@@ -145,7 +157,7 @@
             </div>
 
             <div class="d-flex align-items-center gap-3">
-                <a href="{{ url_for('etudiant') }}"
+                <a href="etudiant"
                    class="btn btn-nouveau {% if not date_fermeture %}disabled{% endif %}"
                    id="nouvelle-btn"
                    data-bs-toggle="modal"

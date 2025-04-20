@@ -11,536 +11,15 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-<style>
-    /* Styles pour l'export PDF */
-.print-header {
-  display: flex;
-  justify-content: space-between;
-  padding: 20px 0;
-  margin-bottom: 30px;
-  border-bottom: 2px solid #000;
-}
-
-.header-section {
-  display: flex;
-  align-items: center;
-  width: 45%;
-}
-
-.left-section { justify-content: flex-start; }
-.right-section { justify-content: flex-end; }
-
-.header-logo {
-  height: 80px;
-  margin: 0 15px;
-}
-
-.header-text h3 {
-  margin: 0;
-  font-size: 1.2em;
-  color: #2c3e50;
-}
-
-.header-text h4, .header-text h5 {
-  margin: 5px 0;
-  font-size: 1em;
-  color: #34495e;
-}
-
-/* Assurer la cohérence d'impression */
-@media print {
-  body {
-    padding: 20px;
-    font-size: 12pt;
-  }
-
-  .table-admin {
-    border-collapse: collapse;
-    width: 100%;
-  }
-
-  .table-admin td, .table-admin th {
-    border: 1px solid #ddd;
-    padding: 8px;
-  }
-}
-    .dropdown-menu {
-    z-index: 1030 !important; /* Valeur supérieure à celle de l'en-tête sticky (1020) */
-    position: absolute; /* Assure le bon positionnement */
-}
-
-  .scrollable-admin {
-  /* SUPPRIMER CES LIGNES */
-  max-height: calc(100vh - 280px);
-  overflow-y: auto;
-}
-    /* Ajoutez ce style pour le dropdown */
-.dropdown-menu {
-  min-width: 220px;
-}
-
-.dropdown-item {
-  padding: 8px 15px;
-  display: flex;
-  align-items: center;
-}
-
-.dropdown-item i {
-  width: 20px;
-  margin-right: 10px;
-}
-
-    .status-chip {
-    padding: 0.5rem 1.2rem;
-    font-size: 0.85em;
-    font-weight: 500;
-    letter-spacing: 0.05em;
-    border-radius: 1.5rem;
-    transition: all 0.3s ease;
-    text-transform: uppercase;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  }
-
-  .status-chip.accepté {
-    background: #d1fae5;
-    color: #065f46;
-    border: 2px solid #34d399;
-  }
-
-  .status-chip.refusé {
-    background: #fee2e2;
-    color: #991b1b;
-    border: 2px solid #f87171;
-  }
-
-  .status-chip.en-attente {
-    background: #fef3c7;
-    color: #92400e;
-    border: 2px solid #fbbf24;
-  }
-
-  /* Bouton d'action principal */
-  .btn-action-trigger {
-    width: 36px;
-    height: 36px;
-    padding: 0;
-    border-radius: 50% !important;
-    transition: all 0.3s ease !important;
-    background: #f8fafc;
-    border: 2px solid #e2e8f0 !important;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .btn-action-trigger:hover {
-    background: #3b82f6 !important;
-    border-color: #3b82f6 !important;
-    color: white !important;
-    transform: rotate(90deg) scale(1.1);
-    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
-  }
-
-  /* Menu déroulant amélioré */
-  .dropdown-menu {
-    border: 2px solid #e2e8f0;
-    border-radius: 12px;
-    box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
-    padding: 0.5rem;
-    margin-top: 8px !important;
-  }
-
-  .dropdown-item {
-    padding: 0.75rem 1.5rem;
-    border-radius: 8px;
-    display: flex;
-    align-items: center;
-    gap: 0.75rem;
-    transition: all 0.2s ease;
-    font-weight: 500;
-  }
-
-  .dropdown-item[data-action="accept"] {
-    color: #065f46;
-  }
-
-  .dropdown-item[data-action="accept"]:hover {
-    background: #d1fae5;
-    color: #065f46;
-  }
-
-  .dropdown-item[data-action="reject"] {
-    color: #991b1b;
-  }
-
-  .dropdown-item[data-action="reject"]:hover {
-    background: #fee2e2;
-    color: #991b1b;
-  }
-
-
-
-     /* Styles personnalisés pour la pagination */
-  .pagination {
-    --bs-pagination-active-bg: #3b82f6;
-    --bs-pagination-active-border-color: #3b82f6;
-    gap: 0.5rem;
-  }
-
-  .page-item {
-    transition: transform 0.2s ease;
-  }
-
-  .page-item:hover {
-    transform: translateY(-2px);
-  }
-
-  .page-link {
-    min-width: 40px;
-    text-align: center;
-    border-radius: 8px !important;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-  }
-
-  .page-link:hover {
-    background: #f8fafc;
-  }
-
-  .page-item.active .page-link {
-    font-weight: 600;
-    box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
-  }
-
-  @media (max-width: 576px) {
-    .pagination {
-      gap: 0.25rem;
-    }
-
-    .page-link {
-      min-width: 32px;
-      padding: 0.375rem 0.5rem;
-    }
-  }
-    /* Styles pour les filtres */
-.form-select, .form-control[type="date"] {
-    min-width: 180px;
-    transition: all 0.3s ease;
-    border-radius: 8px;
-    border: 1px solid #dee2e6;
-}
-
-.form-select:focus, .form-control[type="date"]:focus {
-    border-color: #86b7fe;
-    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
-}
-
-@media (max-width: 992px) {
-    .row.g-3 {
-        gap: 1rem !important;
-    }
-
-    .col-md-3, .col-md-6 {
-        width: 100%;
-        max-width: 100%;
-    }
-
-    .d-flex.gap-2 {
-        flex-wrap: wrap;
-    }
-
-    .form-select, .form-control[type="date"] {
-        width: 100%;
-        min-width: auto;
-    }
-}
-    /* Améliorations du tableau */
-    .table-admin {
-        --bs-table-bg: #f8fafc;
-        --bs-table-striped-bg: #fff;
-        --bs-table-hover-bg: #f1f5f9;
-        border-collapse: separate;
-        border-spacing: 0 0.5rem;
-    }
-     .table-admin th {
-        font-weight: 600;
-        letter-spacing: 0.05em;
-        border-bottom: 2px solid #cbd5e1 !important;
-    }
-
-     .table-admin td {
-        vertical-align: middle;
-        background: white;
-        border-top: 1px solid #e2e8f0 !important;
-    }
-    .table-admin tr {
-        transition: transform 0.2s ease, box-shadow 0.2s ease;
-    }
-    .admin-gradient {
-      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-      border-bottom: 2px solid rgba(255,255,255,0.1);
-    }
-    .status-chip {
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      width: fit-content;
-    }
-    .scrollable-admin {
-      max-height: calc(100vh - 280px);
-      overflow-y: auto;
-    }
-    /* Améliorations des filtres */
-    .filter-group {
-        position: relative;
-        transition: all 0.3s ease;
-    }
-    .filter-group:hover {
-        transform: translateY(-2px);
-    }
-        /* Améliorations des badges de statut */
-    .status-chip {
-        padding: 0.35rem 1rem;
-        font-size: 0.8em;
-        letter-spacing: 0.05em;
-        border-radius: 1rem;
-        transition: all 0.3s ease;
-    }
-
-    .status-chip:hover {
-        transform: scale(1.05);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-    }
-
-    .filter-group-container {
-    margin-left: auto;
-    display: flex;
-    gap: 0.75rem;
-    justify-content: flex-end;
-}
-
-/* Pour une meilleure adaptation responsive */
-@media (max-width: 768px) {
-    .filter-group-container {
-        width: 100%;
-        justify-content: space-between;
-    }
-
-    .filter-group-container > * {
-        flex: 1;
-        min-width: 120px;
-    }
-}
-
-    /* Améliorations des actions */
-    .btn-action-trigger {
-        width: 34px;
-        height: 34px;
-        padding: 0;
-        border-radius: 50% !important;
-        transition: all 0.3s ease !important;
-    }
-
-    .btn-action-trigger:hover {
-        background: #3b82f6 !important;
-        color: white !important;
-        transform: rotate(90deg);
-    }
-
-    .action-panel {
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
-    }
-
-    .action-item {
-        position: relative;
-        overflow: hidden;
-        transition: all 0.2s ease;
-    }
-
-    .action-item::before {
-        content: "";
-        position: absolute;
-        left: -10px;
-        top: 0;
-        height: 100%;
-        width: 3px;
-        background: transparent;
-        transition: all 0.3s ease;
-    }
-
-    .action-item:hover::before {
-        left: 0;
-        background: currentColor;
-        opacity: 0.1;
-    }
-
-    /* Responsive */
-    @media (max-width: 768px) {
-        .scrollable-admin {
-            max-height: calc(100vh - 320px);
-        }
-
-        .table-admin thead {
-            display: none;
-        }
-
-        .table-admin tr {
-            display: block;
-            margin-bottom: 1rem;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            border-radius: 8px;
-        }
-
-        .table-admin td {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            border: none !important;
-        }
-
-        .table-admin td::before {
-            content: attr(data-label);
-            font-weight: 600;
-            width: 120px;
-            flex-shrink: 0;
-        }
-    }
-
-     .filter-group select option:not([value="Tous"])::after {
-        content: "";
-        position: absolute;
-        right: 1rem;
-        top: 50%;
-        transform: translateY(-50%);
-        width: 8px;
-        height: 8px;
-        background: #3b82f6;
-        border-radius: 50%;
-    }
-    /* Bouton d'action individuel */
-    .btn-action-trigger {
-      background: rgba(0,0,0,0.05);
-      border: 1px solid rgba(0,0,0,0.1);
-      padding: 0.25rem 0.75rem;
-      transition: all 0.3s ease;
-    }
-    .btn-action-trigger:hover {
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    /* Panneau d'action pour chaque ligne */
-    .action-panel {
-      position: absolute;
-      right: 0;
-      top: 100%;
-      width: 220px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(10px);
-      transition: all 0.3s ease;
-      z-index: 1050;
-    }
-    .action-panel.show {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-    }
-    .action-header {
-      padding: 0.5rem 1rem;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .action-body {
-      padding: 0.5rem 0;
-    }
-    .action-item {
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .action-item:hover {
-      background: rgba(0,0,0,0.05);
-    }
-    /* Styles pour le menu global Outils */
-    .dropdown-menu {
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 8px;
-    }
-    .dropdown-item {
-      padding: 0.5rem 1rem;
-      transition: background 0.2s;
-    }
-    .dropdown-item:hover {
-      background: #f8f9fa;
-    }
-  </style>
+<link rel="stylesheet" href="static/admin.css">
 </head>
 <body class="d-flex flex-column h-100 bg-light">
+{% include 'header_admin2.html' %}
+<main class="flex-grow-1">
+  <div class="container-fluid px-4">
 
-  <!-- En-tête Admin -->
-  <header class="admin-gradient text-white p-3 shadow">
-    <div class="d-flex justify-content-between align-items-center">
-      <div>
-        <h1 class="h4 mb-0">
-          <i class="fas fa-user-shield me-2"></i>Espace Administrateur
-        </h1>
-        <small class="text-white-50 opacity-75">Gestion avancée des réclamations étudiantes</small>
-      </div>
-      <div class="d-flex gap-2 align-items-center">
-
-        <!-- Remplacez le bouton simple par ce dropdown -->
-        <div class="dropdown ms-2">
-          <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="printDropdown" data-bs-toggle="dropdown">
-            <i class="fas fa-print me-1"></i> Imprimer le résultat
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end shadow">
-            <li><a class="dropdown-item" href="#" onclick="printTable(true)"><i class="fas fa-print me-2"></i>Imprimer directement</a></li>
-            <li><a class="dropdown-item" href="#" onclick="exportToPDF()"><i class="fas fa-file-pdf me-2"></i>Exporter en PDF</a></li>
-          </ul>
-        </div>
-
-        <!-- Menu global Outils -->
-        <div class="dropdown">
-          <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
-            <i class="fas fa-sliders-h me-1"></i>
-            <span class="d-none d-md-inline">Outils</span>
-          </button>
-          <ul class="dropdown-menu dropdown-menu-end shadow">
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="{{ url_for('parametres_admin') }}">
-             <i class="fas fa-cog text-primary me-2"></i> Paramètres
-             </a>
-
-            </li>
-            <li>
-              <a class="dropdown-item d-flex align-items-center" href="#" data-bs-toggle="modal" data-bs-target="#statsModal">
-                <i class="fas fa-chart-line text-success me-2"></i> Statistiques
-              </a>
-            </li>
-            <li><hr class="dropdown-divider"></li>
-          </ul>
-        </div>
-
-
-        <!-- Bouton Déconnexion -->
-        <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm">
-          <i class="fas fa-sign-out-alt me-1"></i>
-          <span class="d-none d-md-inline">Déconnexion</span>
-        </a>
-      </div>
-    </div>
-  </header>
-
-  <!-- Contrôles Admin -->
-  <!-- Contrôles Admin -->
-<section class="container-fluid mt-3">
-  <div class="row g-3 align-items-center mb-3">
+<section class="container-fluid mt-4">
+  <div class="filter-group-container">
     <!-- Colonne Recherche -->
     <div class="col-md-3">
       <div class="input-group">
@@ -580,6 +59,7 @@
     </div>
   </div>
 </section>
+  </div>
 
   <!-- Tableau Admin -->
   <section class="container-fluid">
@@ -625,19 +105,65 @@
       <li>
         <a class="dropdown-item" href="#" data-action="accept"
            data-reclamation-id="{{ rec.id_rec }}">
-          <i class="fas fa-check-circle"></i>Accepter
+          <i class="fas fa-check-circle"></i> Accepter
         </a>
       </li>
       <li>
         <a class="dropdown-item" href="#" data-action="reject"
            data-reclamation-id="{{ rec.id_rec }}">
-          <i class="fas fa-times-circle"></i>Refuser
+          <i class="fas fa-times-circle"></i> Refuser
+        </a>
+      </li>
+      <li>
+        <a class="dropdown-item text-info" href="#"
+           data-bs-toggle="modal" data-bs-target="#viewReclamationModal{{ rec.id_rec }}">
+          <i class="fas fa-eye"></i> Voir
         </a>
       </li>
     </ul>
   </div>
 </td>
+
         </tr>
+        <!-- Modal pour voir les détails -->
+        <div class="modal fade" id="viewReclamationModal{{ rec.id_rec }}" tabindex="-1" aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header admin-gradient text-white">
+                        <h5 class="modal-title">Détails de la réclamation</h5>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <div class="modal-body">
+                        <div class="mb-3 d-flex justify-content-between align-items-center">
+                            <span class="status-chip {{ rec.statut|lower|replace(' ', '-') }}">
+                                {{ rec.statut }}
+                            </span>
+                            <span class="text-muted small">
+                                <i class="far fa-calendar-alt me-1"></i>{{ rec.date_creation }}
+                            </span>
+                        </div>
+
+                         <h6 class="fw-bold mb-2">étudiant:</h6>
+                        <p class="mb-3">{{ rec.matricule }}</p>
+                        <h6 class="fw-bold mb-2">Matière:</h6>
+                        <p class="mb-3">{{ rec.matiere }}</p>
+                        <h6 class="fw-bold mb-2">Objet:</h6>
+                        <p class="mb-3">{{ rec.objet }}</p>
+
+                        <h6 class="fw-bold mb-2">Description:</h6>
+                        <p class="bg-light p-3 rounded">{{ rec.details }}</p>
+
+                        {% if rec.commentaire is defined and rec.commentaire %}
+                            <h6 class="fw-bold mb-2">Réponse du professeur:</h6>
+                            <div class="bg-light p-3 rounded">{{ rec.commentaire }}</div>
+                        {% endif %}
+                    </div>
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                    </div>
+                </div>
+            </div>
+        </div>
         {% endfor %}
       </tbody>
     </table>
@@ -760,6 +286,7 @@
     </li>
   </ul>
 </nav>
+</main>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function() {
@@ -1201,26 +728,27 @@ function printTable(directPrint = false) {
 
         <!-- FIN EN-TÊTE -->
 
-        <h1 style="text-align: center;">Liste des Réclamations - ${new Date().toLocaleDateString()}</h1>
+        <h1 style="text-align: center;">Listes des Réclamations </h1>
 
         ${clone.outerHTML}
 
-        <div style="text-align: center; margin: 30px 0;">
-    <button onclick="window.history.back()"
-            style="padding: 10px 25px;
-                   background: #3b82f6;
-                   color: white;
-                   border: none;
-                   border-radius: 8px;
-                   cursor: pointer;
-                   font-size: 16px;">
-      Retour aux cours
-    </button>
-  </div>
+        <div class="no-print" style="text-align: center; margin: 30px 0;" id="retour-btn">
+  <button onclick="window.history.back()"
+          style="padding: 10px 25px;
+                 background: #3b82f6;
+                 color: white;
+                 border: none;
+                 border-radius: 8px;
+                 cursor: pointer;
+                 font-size: 16px;">
+    Retour aux cours
+  </button>
+</div>
+
 
         <!-- DEBUT PIED DE PAGE PERSONNALISÉ -->
         <div class="print-footer">
-          <p>Service des Réclamations - Tél: 01 23 45 67 89 - Email: contact@polytechnique.com</p>
+          <p>Service des Réclamations - Tél: 01 23 45 67 89 - Email: admin@isme.esp.mr</p>
           <p>Document généré le: ${new Date().toLocaleDateString()}</p>
         </div>
         <!-- FIN PIED DE PAGE -->
@@ -1340,6 +868,8 @@ async function exportToPDF() {
     `;
 
     document.body.appendChild(printContainer);
+    const retourBtn = document.getElementById('retour-btn');
+if (retourBtn) retourBtn.style.display = 'none';
 
     // Générer le PDF
     const canvas = await html2canvas(printContainer, {
@@ -1357,13 +887,16 @@ async function exportToPDF() {
     pdf.addImage(imgData, 'PNG', 10, 10, imgWidth, imgHeight);
     document.body.removeChild(printContainer);
 
-    pdf.save(`reclamations_${new Date().toISOString().slice(0,10)}.pdf`);
+    pdf.save(`reclamations_${new Date().toISOString().slice(0,10)}.pdf`) ;
 
   } catch (error) {
     console.error('Erreur génération PDF:', error);
     alert('Erreur lors de l\'export PDF');
   }
 }
+    // Réafficher le bouton "Retour aux cours"
+if (retourBtn) retourBtn.style.display = 'block';
+
 </script>
 
 </body>

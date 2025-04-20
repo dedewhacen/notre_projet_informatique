@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 11, 2025 at 01:26 AM
+-- Generation Time: Apr 17, 2025 at 12:43 AM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -30,18 +30,19 @@ CREATE TABLE IF NOT EXISTS `configuration_reclamation` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `niveau` varchar(2) NOT NULL,
   `code_mat` text NOT NULL,
+  `date_ouverture` datetime NOT NULL,
   `date_fermeture` datetime NOT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_config` (`niveau`,`date_fermeture`),
   KEY `idx_date_fermeture` (`date_fermeture`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=58 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=12 ;
 
 --
 -- Dumping data for table `configuration_reclamation`
 --
 
-INSERT INTO `configuration_reclamation` (`id`, `niveau`, `code_mat`, `date_fermeture`) VALUES
-(56, 'L3', 'GCGP_54,GCGP_55', '2025-04-11 22:34:00');
+INSERT INTO `configuration_reclamation` (`id`, `niveau`, `code_mat`, `date_ouverture`, `date_fermeture`) VALUES
+(10, 'L1', 'GCGP_21,GCGP_22,GCGP_23,GCGP_24,GCGP_25,GCGP_26,GCGP_27,GEER_21,GEER_22,GEER_23,GEER_24,GEER_25,GEER_26,HE_21,HE_22,HE_23,ST_21,ST_22,ST_23', '0000-00-00 00:00:00', '2025-04-18 12:24:00');
 
 -- --------------------------------------------------------
 
@@ -64,9 +65,12 @@ CREATE TABLE IF NOT EXISTS `etudiant` (
 --
 
 INSERT INTO `etudiant` (`matricule_etd`, `Email`, `Departement`, `Licence`, `pwd`) VALUES
+(20542, '20542@isme.esp.mr', 'GCGP', 'L3', '1234'),
+(20543, '20543@isme.esp.mr', 'GEER', 'L3', '1234'),
 (23501, '23501@isme.esp.mr', 'GCGP', 'L1', '1111'),
 (23502, '23502@isme.esp.mr', 'GEER', 'L2', '1234'),
-(23503, '23503@isme.esp.mr', 'GCGP', 'L1', '123');
+(23503, '23503@isme.esp.mr', 'GEER', 'L1', '123'),
+(23504, '23504@isme.esp.mr', 'GCGP', 'L2', '1234');
 
 -- --------------------------------------------------------
 
@@ -192,28 +196,39 @@ CREATE TABLE IF NOT EXISTS `reclamation` (
   `matricule_etd` int(11) NOT NULL,
   `code_mat` varchar(50) DEFAULT NULL,
   `statut` enum('En attente','En traitement','Accepté','Refusé') DEFAULT 'En attente',
+  `config_id` int(11) DEFAULT NULL,
   PRIMARY KEY (`id_rec`),
   UNIQUE KEY `unique_reclamation` (`matricule_etd`,`code_mat`),
   KEY `matricule_etd` (`matricule_etd`),
-  KEY `code_mat` (`code_mat`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=90 ;
+  KEY `code_mat` (`code_mat`),
+  KEY `idx_config_id` (`config_id`)
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=117 ;
 
 --
 -- Dumping data for table `reclamation`
 --
 
-INSERT INTO `reclamation` (`id_rec`, `Détails`, `Objet_rec`, `moment_de_creation`, `matricule_etd`, `code_mat`, `statut`) VALUES
-(17, 'nnnnnnn', 'Devoir', '2025-04-05 00:00:00', 23502, 'GEER_34', 'Accepté'),
-(19, 'kalma \r\n', 'Examen', '2025-04-07 00:00:00', 23502, 'GEER_41', 'Refusé'),
-(21, '15\r\n', 'Devoir', '2025-04-08 00:00:00', 23502, 'GEER_45', 'Refusé'),
-(38, '2222', 'Examen', '2025-04-08 00:00:00', 23502, 'GEER_46', 'Refusé'),
-(66, '20/20/20', 'Devoir', '2025-04-08 16:45:21', 23502, 'HE_42', 'En attente'),
-(68, '20\r\n\r\n', 'Devoir', '2025-04-08 17:01:01', 23502, 'GEER_44', 'En attente'),
-(85, '20/20', 'Devoir', '2025-04-09 18:51:36', 23502, 'GEER_43', 'En attente'),
-(86, 'je pense mon note est 17', 'Devoir', '2025-04-10 21:49:33', 23501, 'HE_22', 'Accepté'),
-(87, 'j''ai trouve 0 ', 'TP', '2025-04-10 21:50:36', 23501, 'GCGP_22', 'Refusé'),
-(88, '20/20', 'Examen', '2025-04-10 21:51:14', 23501, 'ST_22', 'Refusé'),
-(89, 'c''est pas bon', 'Examen', '2025-04-10 22:24:45', 23501, 'GCGP_23', 'En attente');
+INSERT INTO `reclamation` (`id_rec`, `Détails`, `Objet_rec`, `moment_de_creation`, `matricule_etd`, `code_mat`, `statut`, `config_id`) VALUES
+(17, 'nnnnnnn', 'Devoir', '2025-04-05 00:00:00', 23502, 'GEER_34', 'Accepté', NULL),
+(19, 'kalma \r\n', 'Examen', '2025-04-07 00:00:00', 23502, 'GEER_41', 'Refusé', NULL),
+(21, '15\r\n', 'Devoir', '2025-04-08 00:00:00', 23502, 'GEER_45', 'Refusé', NULL),
+(38, '2222', 'Examen', '2025-04-08 00:00:00', 23502, 'GEER_46', 'Refusé', NULL),
+(66, '20/20/20', 'Devoir', '2025-04-08 16:45:21', 23502, 'HE_42', 'En attente', NULL),
+(68, '20\r\n\r\n', 'Devoir', '2025-04-08 17:01:01', 23502, 'GEER_44', 'En attente', NULL),
+(85, '20/20', 'Devoir', '2025-04-09 18:51:36', 23502, 'GEER_43', 'En attente', NULL),
+(86, 'je pense mon note est 17', 'Devoir', '2025-04-10 21:49:33', 23501, 'HE_22', 'Accepté', NULL),
+(87, 'j''ai trouve 0 ', 'TP', '2025-04-10 21:50:36', 23501, 'GCGP_22', 'Refusé', NULL),
+(88, '20/20', 'Examen', '2025-04-10 21:51:14', 23501, 'ST_22', 'Refusé', NULL),
+(89, 'c''est pas bon', 'Examen', '2025-04-10 22:24:45', 23501, 'GCGP_23', 'Accepté', NULL),
+(108, 'qqqqqqqq', 'Examen', '2025-04-11 17:45:39', 23503, 'GEER_26', 'Refusé', NULL),
+(109, '03 n8ava', 'Devoir', '2025-04-11 17:54:02', 23503, 'GEER_22', 'Accepté', NULL),
+(110, '43', 'Examen', '2025-04-11 18:10:28', 20543, 'GEER_55', 'Accepté', NULL),
+(111, '42', 'Examen', '2025-04-11 18:11:12', 20542, 'GCGP_57', 'Accepté', NULL),
+(112, '222222', 'Examen', '2025-04-11 18:12:06', 23501, 'GCGP_25', 'Accepté', NULL),
+(113, '04', 'Devoir', '2025-04-11 18:13:15', 23504, 'GCGP_44', 'En attente', NULL),
+(114, '02', 'Devoir', '2025-04-11 18:13:54', 23502, 'GEER_42', 'En attente', NULL),
+(115, 'wwwwawww', 'Devoir', '2025-04-14 12:03:12', 23502, 'HE_41', 'Accepté', NULL),
+(116, 'sssssssssssssss', 'Devoir', '2025-04-16 19:08:39', 23501, 'HE_23', 'En attente', 10);
 
 -- --------------------------------------------------------
 
@@ -231,7 +246,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 --
 
 INSERT INTO `user` (`email_admin`, `pwd_admin`) VALUES
-('admin@isme.esp.mr', 'admin123');
+('admin@isme.esp.mr', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW');
 
 --
 -- Constraints for dumped tables
@@ -241,6 +256,7 @@ INSERT INTO `user` (`email_admin`, `pwd_admin`) VALUES
 -- Constraints for table `reclamation`
 --
 ALTER TABLE `reclamation`
+  ADD CONSTRAINT `fk_config_id` FOREIGN KEY (`config_id`) REFERENCES `configuration_reclamation` (`id`) ON DELETE SET NULL,
   ADD CONSTRAINT `reclamation_ibfk_1` FOREIGN KEY (`matricule_etd`) REFERENCES `etudiant` (`matricule_etd`),
   ADD CONSTRAINT `reclamation_ibfk_2` FOREIGN KEY (`code_mat`) REFERENCES `matiere` (`code_mat`);
 

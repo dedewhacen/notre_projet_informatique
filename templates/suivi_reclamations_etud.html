@@ -7,221 +7,52 @@
     <title>Suivi des Réclamations - ISME</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <style>
-        .status-chip {
-  padding: 0.5rem 1.2rem;
-  font-size: 0.85em;
-  border-radius: 1.5rem;
-  transition: all 0.3s ease;
-  text-transform: uppercase;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
-}
-
-.status-chip.accepté {
-  background: #d1fae5;
-  color: #065f46;
-  border: 2px solid #34d399;
-}
-
-.status-chip.refusé {
-  background: #fee2e2;
-  color: #991b1b;
-  border: 2px solid #f87171;
-}
-
-.status-chip.en-attente {
-  background: #fef3c7;
-  color: #92400e;
-  border: 2px solid #fbbf24;
-}
-
-
-
-
-
-         /* Ajout de styles améliorés */
-        .hover-shadow {
-            transition: box-shadow 0.2s ease;
-        }
-        .hover-shadow:hover {
-            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.1);
-        }
-        .status-badge {
-            min-width: 100px;
-            text-align: center;
-        }
-        .table-responsive {
-            overflow-x: auto;
-        }
-        .btn.disabled {
-    pointer-events: none;
-    opacity: 0.65;
-    box-shadow: none;
-}
-        .header-bg {
-            background: linear-gradient(135deg, #1e3c72 0%, #2a5298 100%);
-        }
-        .status-badge {
-            padding: 0.35rem 0.8rem;
-            border-radius: 20px;
-            font-size: 0.85rem;
-        }
-        .scrollable-content {
-            flex: 1;
-            min-height: 0;
-            overflow-y: auto;
-        }
-        .main-card {
-            height: calc(100vh - 20px);
-            margin: 10px;
-        }
-        @media (max-width: 768px) {
-            .main-card {
-                margin: 5px;
-                height: calc(100vh - 10px);
-            }
-            .action-btn span {
-                display: none;
-            }
-        }
-
-        .admin-gradient {
-      background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-      border-bottom: 2px solid rgba(255,255,255,0.1);
-    }
-    .status-chip {
-      padding: 0.3rem 0.8rem;
-      border-radius: 20px;
-      font-size: 0.85rem;
-      width: fit-content;
-    }
-    .scrollable-admin {
-      max-height: calc(100vh - 280px);
-      overflow-y: auto;
-    }
-    /* Bouton d'action individuel */
-    .btn-action-trigger {
-      background: rgba(0,0,0,0.05);
-      border: 1px solid rgba(0,0,0,0.1);
-      padding: 0.25rem 0.75rem;
-      transition: all 0.3s ease;
-    }
-    .btn-action-trigger:hover {
-      background: #fff;
-      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    }
-    /* Panneau d'action pour chaque ligne */
-    .action-panel {
-      position: absolute;
-      right: 0;
-      top: 100%;
-      width: 220px;
-      background: white;
-      border-radius: 8px;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-      opacity: 0;
-      visibility: hidden;
-      transform: translateY(10px);
-      transition: all 0.3s ease;
-      z-index: 1050;
-    }
-    .action-panel.show {
-      opacity: 1;
-      visibility: visible;
-      transform: translateY(0);
-    }
-    .action-header {
-      padding: 0.5rem 1rem;
-      border-bottom: 1px solid rgba(0,0,0,0.1);
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-    .action-body {
-      padding: 0.5rem 0;
-    }
-    .action-item {
-      padding: 0.5rem 1rem;
-      cursor: pointer;
-      transition: background 0.2s;
-    }
-    .action-item:hover {
-      background: rgba(0,0,0,0.05);
-    }
-    /* Styles pour le menu global Outils */
-    .dropdown-menu {
-      border: 1px solid rgba(0,0,0,0.1);
-      border-radius: 8px;
-    }
-    .dropdown-item {
-      padding: 0.5rem 1rem;
-      transition: background 0.2s;
-    }
-    .dropdown-item:hover {
-      background: #f8f9fa;
-    }
-
-
-
-
-
-
-        /*dede
-        /* Modification du header */
-.admin-gradient {
-    background: linear-gradient(135deg, #2c3e50 0%, #3498db 100%);
-    padding: 1.5rem 2rem; /* Augmentation de la hauteur */
-    min-height: 90px; /* Hauteur minimale garantie */
-
-}
-
-/* Nouveau style pour le bouton principale */
-.btn-nouveau {
-    background: #2980b9 !important; /* Couleur harmonisée */
-    border: 2px solid rgba(255,255,255,0.3) !important;
-    border-radius: 8px !important;
-    padding: 0.75rem 1.5rem !important;
-    transition: all 0.3s ease !important;}
-}
-
-.btn-nouveau:hover {
-    background: #3498db !important;
-    transform: translateY(-1px);
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-/* Adaptation du dropdown Outils */
-.dropdown-menu {
-    min-width: 200px;
-}
-
-.dropdown-item.logout {
-    color: #dc3545 !important;
-}
-
-.dropdown-item.logout:hover {
-    background: #ffe6e6 !important;
-}
-
-/* Espacement du tableau */
-.scrollable-content {
-    margin-top: 20px; /* Déplacement vers le bas */
-}
-
-/* Amélioration du tableau */
-.table-hover tbody tr {
-    transition: all 0.2s ease;
-}
-
-.table-hover tbody tr:hover {
-    background: #f8f9fa !important;
-    transform: scale(1.002);
-    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
-}
-    </style>
+    <link rel="stylesheet" href="static/suivi_rec.css">
 </head>
+<style>
+/* Style personnalisé pour le select */
+.custom-select {
+    border-radius: 0.5rem !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+}
+
+/* Transition fluide */
+.input-group {
+    transition: all 0.3s ease;
+}
+
+/* Style au focus */
+.form-select:focus {
+    box-shadow: none;
+    border-color: #86b7fe;
+}
+</style>
+<style>
+/* Style personnalisé pour le select */
+.custom-select {
+    border-radius: 0.5rem !important;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    padding: 0.75rem 1rem;
+    border: 1px solid #dee2e6;
+}
+
+/* Transition fluide */
+.input-group {
+    transition: all 0.3s ease;
+}
+
+/* Style au focus */
+.form-select:focus {
+    box-shadow: none;
+    border-color: #86b7fe;
+}
+</style>
 <body class="d-flex flex-column h-100 bg-light">
-     {% with messages = get_flashed_messages(with_categories=true) %}
+{% include 'header.html' %}
+
+{% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
         {% for category, message in messages %}
             <div class="alert alert-{{ category }} alert-dismissible fade show mt-3 mx-3" role="alert">
@@ -230,7 +61,6 @@
             </div>
 
             <script>
-                // Fermer automatiquement après 3 secondes
                 (function() {
                     let alert = document.querySelector('.alert');
                     setTimeout(() => {
@@ -243,117 +73,847 @@
         {% endfor %}
     {% endif %}
 {% endwith %}
-        <!-- En-tête -->
-       <header class="admin-gradient text-white shadow-lg">
-        <div class="header-content d-flex justify-content-between align-items-center">
-            <div>
-                <h2 class="brand-title mb-0">
-                    <i class="fas fa-file-contract me-2"></i>ISME
-                </h2>
-                <small class="brand-subtitle">Gestion avancée des réclamations étudiantes</small>
-            </div>
 
-        <div class="d-flex align-items-center gap-3">
-            <a href="{{ url_for('etudiant') }}"
-                class="btn btn-nouveau {% if not date_fermeture %}disabled{% endif %}"
-               id="nouvelle-btn">
-                <i class="fas fa-plus-circle"></i>
-                <span>Nouvelle Réclamation</span>
-            </a>
+<div class="scrollable-content">
+    <div class="container-fluid pt-3">
+        <div class="card border-0 shadow-sm">
+            <!-- En-tête avec titre et barre d'outils -->
+            <div class="card-header bg-white p-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+                <h5 class="mb-0 fw-bold text-primary">
+                    <i class="fas fa-clipboard-list me-2"></i>Mes réclamations
+                </h5>
+                <div class="d-flex flex-wrap gap-2">
 
-            <div class="dropdown">
-                <button class="header-btn btn btn-light dropdown-toggle"
-                        type="button"
-                        data-bs-toggle="dropdown"
-                        aria-expanded="false">
-                    <i class="fas fa-sliders-h"></i>
-                    <span>Outils</span>
-                </button>
-                <ul class="dropdown-menu dropdown-menu-end shadow">
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center"
-                           href="{{ url_for('parametres') }}">
-                            <i class="fas fa-cog text-primary me-2"></i>
-                            Paramètres
-                        </a>
-                    </li>
-                     <li><hr class="dropdown-divider"></li>
-                        <li>
-                            <a class="dropdown-item logout d-flex align-items-center"
-                               href="{{ url_for('logout') }}">
-                                <i class="fas fa-sign-out-alt me-2"></i>
-                                Déconnexion
-                            </a>
-                        </li>
-                    </ul>
                 </div>
             </div>
 
-        </div>
-    </div>
-</header>
-
-            <!-- Tableau -->
-            <div class="scrollable-content">
-                <div class="container-fluid pt-3">
-                    <div class="card border-0 shadow-sm">
-                    <div class="card-body p-4">
-                    <table class="table table-hover align-middle mb-0 bg-white">
-                        <thead class="sticky-top bg-light z-1">
+            <!-- Corps du tableau -->
+            <div class="card-body p-0">
+                <div class="table-responsive">
+                    <table class="table table-hover align-middle mb-0" id="reclamationsTable">
+                        <thead class="sticky-top bg-light">
                             <tr>
-                                <th>#</th>
-                                <th>Matière</th>
-                                <th>Statut</th>
-                                <th>Description</th>
-                                <th>Date</th>
+                                <th class="ps-3">#</th>
+                                <th class="sortable" data-sort="matiere">
+                                    <div class="d-flex align-items-center">
+                                        Matière
+                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                    </div>
+                                </th>
+                                <th class="sortable" data-sort="statut">
+                                    <div class="d-flex align-items-center">
+                                        Statut
+                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                    </div>
+                                </th>
+                                <th>objet</th>
+                                <th class="sortable" data-sort="date">
+                                    <div class="d-flex align-items-center">
+                                        Date
+                                        <i class="fas fa-sort ms-1 text-muted small"></i>
+                                    </div>
+                                </th>
                                 <th class="text-center">Actions</th>
                             </tr>
                         </thead>
                         <tbody>
                             {% for rec in reclamations %}
-                            <tr>
-                                <td class="fw-bold">{{ loop.index }}</td>
-                                <td><span class="badge bg-primary bg-opacity-10 text-primary py-2">{{ rec.matiere }}</span></td>
+                            <tr class="status-row" data-status="{{ rec.statut|lower|replace(' ', '-') }}">
+                                <td class="ps-3 fw-bold">{{ loop.index }}</td>
                                 <td>
-                                  <span class="status-chip {{ rec[5]|lower|replace(' ', '-') }}">
-                                    {{ rec.statut }}
-                                  </span>
+                                    <span class="badge bg-primary bg-opacity-10 text-primary py-2 px-3 rounded-pill">
+                                        {{ rec.matiere }}
+                                    </span>
                                 </td>
-                                <td class="text-truncate" style="max-width: 300px;">{{ rec.details }}</td>
-                                <td>{{ rec.date_creation }}</td>
-                                <td class="text-center">
-    <div class="d-flex gap-2 justify-content-center">
-        {% set can_edit = rec.config_id == current_config_id and not is_expired %}
-        <a href="{{ url_for('modifier_reclamation_etud', id_rec=rec.id_rec) }}"
-           class="btn btn-warning btn-sm modifier-btn {% if not can_edit %}disabled{% endif %}">
-            <i class="fas fa-edit"></i>
-            <span class="d-none d-md-inline">Modifier</span>
-        </a>
-        <form method="POST" action="{{ url_for('supprimer_reclamation', id_rec=rec.id_rec) }}">
-            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
-            <button type="submit"
-                    class="btn btn-danger btn-sm supprimer-btn {% if not can_edit %}disabled{% endif %}"
-                     onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette réclamation ?')">
-                <i class="fas fa-trash-alt"></i>
-                <span class="d-none d-md-inline">Supprimer</span>
-            </button>
-        </form>
-    </div>
-</td>
+                                <td>
+                                    <span class="status-chip {{ rec.statut|lower|replace(' ', '-') }}">
+                                        {% if rec.statut|lower == 'en-attente' %}
+                                            <i class="fas fa-clock me-1"></i>
+                                        {% elif rec.statut|lower == 'accepté' %}
+                                            <i class="fas fa-check me-1"></i>
+                                        {% elif rec.statut|lower == 'refusé' %}
+                                            <i class="fas fa-times me-1"></i>
+                                        {% endif %}
+                                        {{ rec.statut }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="text-truncate description-cell" style="max-width: 300px;" data-bs-toggle="tooltip" data-bs-placement="top" title="{{ rec.details }}">
+                                        {{ rec.objet}}
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex flex-column">
+                                        <span>{{ rec.date_creation.strftime('%d/%m/%Y') if rec.date_creation is defined else rec.date_creation }}</span>
+                                        <small class="text-muted">{{ rec.date_creation.strftime('%H:%M') if rec.date_creation is defined else '' }}</small>
+                                    </div>
+                                </td>
+                                <td>
+                                    <div class="d-flex gap-2 justify-content-center">
+                                        {% set can_edit = rec.config_id == current_config_id and not is_expired %}
+
+                                        <!-- Bouton Voir -->
+                                        <button type="button" class="btn btn-info btn-sm view-btn"
+                                                data-bs-toggle="modal" data-bs-target="#viewReclamationModal{{ rec.id_rec }}">
+                                            <i class="fas fa-eye"></i>
+                                            <span class="d-none d-md-inline ms-1">Voir</span>
+                                        </button>
+
+                                        <!-- Bouton Modifier (existant) -->
+                                        <button type="button"
+                                                class="btn btn-warning btn-sm modifier-btn {% if not can_edit %}disabled{% endif %}"
+                                                data-bs-toggle="modal"
+                                                data-bs-target="#editReclamationModal{{ rec.id_rec }}">
+                                            <i class="fas fa-edit"></i>
+                                            <span class="d-none d-md-inline ms-1">Modifier</span>
+                                        </button>
+
+                                        <!-- Bouton Supprimer (existant) -->
+                                        <form method="POST" action="{{ url_for('supprimer_reclamation', id_rec=rec.id_rec) }}" class="d-inline">
+                                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                                            <button type="submit"
+                                                    class="btn btn-danger btn-sm supprimer-btn {% if not can_edit %}disabled{% endif %}"
+                                                    onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette réclamation ?')">
+                                                <i class="fas fa-trash-alt"></i>
+                                                <span class="d-none d-md-inline ms-1">Supprimer</span>
+                                            </button>
+                                        </form>
+                                    </div>
+
+                                    <!-- Modal pour voir les détails -->
+                                    <div class="modal fade" id="viewReclamationModal{{ rec.id_rec }}" tabindex="-1" aria-hidden="true">
+                                        <div class="modal-dialog">
+                                            <div class="modal-content">
+                                                <div class="modal-header admin-gradient text-white">
+                                                    <h5 class="modal-title">
+                                                        <i class="fas fa-file-alt me-2"></i>Détails de la réclamation
+                                                    </h5>
+                                                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                                                </div>
+                                                <div class="modal-body">
+                                                    <div class="mb-3 d-flex justify-content-between align-items-center">
+                                                        <span class="status-chip {{ rec.statut|lower|replace(' ', '-') }}">
+                                                            {{ rec.statut }}
+                                                        </span>
+                                                        <span class="text-muted small">
+                                                            <i class="far fa-calendar-alt me-1"></i>{{ rec.date_creation }}
+                                                        </span>
+                                                    </div>
+
+                                                    <h6 class="fw-bold mb-2">Matière:</h6>
+                                                    <p class="mb-3">{{ rec.matiere }}</p>
+                                                    <h6 class="fw-bold mb-2">Objet:</h6>
+                                                    <p class="mb-3">{{ rec.objet }}</p>
+
+                                                    <h6 class="fw-bold mb-2">Description:</h6>
+                                                    <p class="bg-light p-3 rounded">{{ rec.details }}</p>
+
+                                                    {% if rec.commentaire is defined and rec.commentaire %}
+                                                        <h6 class="fw-bold mb-2">Réponse du professeur:</h6>
+                                                        <div class="bg-light p-3 rounded">{{ rec.commentaire }}</div>
+                                                    {% endif %}
+                                                </div>
+                                                <div class="modal-footer">
+                                                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Fermer</button>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </td>
                             </tr>
                             {% endfor %}
+
+                            {% if reclamations|length == 0 %}
+                            <tr>
+                                <td colspan="6" class="text-center py-5">
+                                    <div class="py-4">
+                                        <i class="fas fa-clipboard-list fa-3x text-muted mb-3"></i>
+                                        <p class="lead">Aucune réclamation trouvée</p>
+                                        <p class="text-muted">Cliquez sur "Nouvelle réclamation" pour en créer une</p>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endif %}
                         </tbody>
                     </table>
-                    </div>
+                </div>
+
+                <!-- Pied de tableau avec pagination légère -->
+                {% if reclamations|length > 0 %}
+                <div class="d-flex justify-content-between align-items-center px-3 py-2 bg-light border-top">
+                    <div>
+                        <span class="text-muted small">Affichage de <span id="showing-count">{{ reclamations|length }}</span> réclamation(s)</span>
                     </div>
                 </div>
+                {% endif %}
             </div>
-
         </div>
     </div>
+</div>
+<!-- Modal de Réclamation -->
+<!-- Modal de Réclamation -->
+<div class="modal fade" id="reclamationModal" tabindex="-1" aria-labelledby="reclamationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header admin-gradient text-white">
+                <h5 class="modal-title" id="reclamationModalLabel">
+                    <i class="fas fa-file-alt me-2"></i>
+                    Nouvelle Réclamation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script>
+            <div class="modal-body p-4">
+                <form action="{{ url_for('etudiant') }}" method="post" id="reclamationForm">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Section Informations étudiant -->
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h3 class="form-section-title mb-0 fs-5">
+                                <i class="fas fa-user-graduate text-primary me-2"></i>
+                                Informations étudiant
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control dynamic-input"
+                                               id="matricule" name="matricule"
+                                               value="{{ etudiant[0] }}" readonly>
+                                        <label for="matricule">Matricule</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="email" class="form-control dynamic-input"
+                                               id="email" name="email"
+                                               value="{{ etudiant[1] }}" readonly>
+                                        <label for="email">Adresse email</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control dynamic-input"
+                                               id="licence" name="licence"
+                                               value="{{ etudiant[2] }}" readonly>
+                                        <label for="licence">Niveau de licence</label>
+                                    </div>
+                                </div>
+                                <div class="col-md-6">
+                                    <div class="form-floating">
+                                        <input type="text" class="form-control dynamic-input"
+                                               id="departement" name="departement"
+                                               value="{{ etudiant[3] }}" readonly>
+                                        <label for="departement">Département</label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Section Détails de la réclamation -->
+                    <div class="card mb-4 border-0 shadow-sm">
+                        <div class="card-header bg-light py-3">
+                            <h3 class="form-section-title mb-0 fs-5">
+                                <i class="fas fa-edit text-primary me-2"></i>
+                                Détails de la réclamation
+                            </h3>
+                        </div>
+                        <div class="card-body">
+                            <!-- Matière -->
+                            <div class="mb-4">
+                                <div class="form-floating">
+                                    <select class="form-select dynamic-input" id="matiere" name="matiere" required onchange="showClaimedWarning(this)">
+                                    <option value="">Choisir une matière</option>
+                                    {% for matiere in matieres if matiere.code not in claimed_matieres %}
+                                    <option value="{{ matiere.code }}" data-dept="{{ matiere.dept }}">
+                                        {{ matiere.code }}
+                                    </option>
+                                    {% endfor %}
+                                </select>
+                                    <label for="matiere">Matière concernée</label>
+                                </div>
+                                <div id="claimedWarning" class="alert alert-warning py-2 mt-2" style="display: none;">
+                                    <i class="fas fa-exclamation-triangle me-2"></i>
+                                    Une réclamation a déjà été effectuée pour cette matière
+                                </div>
+                            </div>
+
+                            <!-- Type de réclamation -->
+                           <div class="mb-4">
+                                <label for="typeReclamation" class="form-label fw-semibold mb-2">
+                                    Type de réclamation <span class="text-danger">*</span>
+                                </label>
+                                <div id="typeReclamationContainer" class="type-reclamation-box border rounded p-3 bg-white">
+                                    <div class="type-options-container d-flex flex-wrap gap-2">
+                                        <!-- Les options seront générées ici dynamiquement -->
+                                    </div>
+                                    <div class="text-muted small fst-italic mt-2">
+                                        Sélectionnez un ou plusieurs types de réclamation
+                                    </div>
+                                </div>
+                                <!-- Select caché pour maintenir la compatibilité avec le backend -->
+                                <select class="form-select d-none" id="objet" name="objet" multiple required></select>
+                                <div class="invalid-feedback">Veuillez sélectionner au moins un type de réclamation</div>
+                            </div>
+
+                            <!-- Description -->
+                            <div class="mb-2">
+                                <div class="form-floating">
+                                    <textarea class="form-control dynamic-input"
+                                              id="details" name="details"
+                                              placeholder=" " style="height: 150px"
+                                              maxlength="500" required></textarea>
+                                    <label for="details">Description détaillée</label>
+                                </div>
+                                <div class="d-flex justify-content-end mt-2">
+                                    <div class="character-counter text-muted">
+                                        <span id="charCount">0</span>/500 caractères
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer pt-1 pb-3">
+                        <button type="button" class="btn btn-outline-secondary" data-bs-dismiss="modal">
+                            <i class="fas fa-times me-1"></i>
+                            Annuler
+                        </button>
+                        <button type="submit" class="btn submit-btn" id="submitBtn">
+                            <i class="fas fa-paper-plane me-1"></i>
+                            Envoyer la réclamation
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de modification -->
+{% for rec in reclamations %}
+<div class="modal fade" id="editReclamationModal{{ rec.id_rec }}" tabindex="-1" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header admin-gradient text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-edit me-2"></i>Modifier la réclamation
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <form action="{{ url_for('modifier_reclamation', id_rec=rec.id_rec) }}" method="post">
+                <div class="modal-body">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                    <!-- Section Matière améliorée -->
+                    <div class="mb-4">
+                        <label class="form-label fw-medium text-muted mb-2">Matière concernée</label>
+                        <div class="input-group border rounded-2 bg-light">
+                            <span id="currentMatiere{{ rec.id_rec }}"
+                                  class="form-control border-0 bg-transparent py-2">
+                                {{ rec.matiere }}
+                            </span>
+                            <button type="button"
+                                    class="btn btn-link text-decoration-none p-2"
+                                    onclick="toggleMatiereEdit('{{ rec.id_rec }}')"
+                                    aria-label="Modifier la matière">
+                                <i class="fas fa-pencil-alt text-primary"></i>
+                            </button>
+                            <select class="form-select border-0 shadow-sm d-none"
+                                id="matiereSelect{{ rec.id_rec }}"
+                                name="matiere"
+                                style="min-width: 200px;"
+                                required>
+                            {% for mat in matieres if mat.code not in claimed_matieres or mat.code == rec.matiere %}
+                            <option value="{{ mat.code }}"
+                                    data-dept="{{ mat.dept }}"
+                                    {% if mat.code == rec.matiere %}selected{% endif %}>
+                                {{ mat.code }}
+                                {% if mat.code == rec.matiere %}(Actuellement réclamé){% endif %}
+                            </option>
+                            {% endfor %}
+                        </select>
+                        </div>
+                    </div>
+
+                    <!-- Section Type de réclamation améliorée -->
+                   <div class="mb-4">
+                    <label class="form-label fw-medium text-muted mb-2">Type de réclamation</label>
+                    <div class="d-flex gap-3 flex-wrap bg-light p-3 rounded-2">
+                        {% set current_matiere = matieres|selectattr('code', 'equalto', rec.matiere)|first %}
+                        {% set dept = current_matiere.dept if current_matiere else '' %}
+                        {% set current_types = rec.objet.split(', ') %}
+
+                        {# Types de base pour tous les départements #}
+                        {% set types = ['Devoir', 'Examen'] %}
+
+                        {# Ajout de TP pour les départements spéciaux #}
+                        {% if dept in ['GCGP', 'GEER'] %}
+                            {% set types = types + ['TP'] %}
+                        {% endif %}
+
+                        {% for type in types %}
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input border-secondary"
+                                   type="checkbox"
+                                   name="objet"
+                                   value="{{ type }}"
+                                   id="type{{ loop.index }}_{{ rec.id_rec }}"
+                                   {% if type in current_types %}checked{% endif %}>
+                            <label class="form-check-label text-dark"
+                                   for="type{{ loop.index }}_{{ rec.id_rec }}">
+                                <i class="fas fa-{{ 'book' if type == 'Devoir'
+                                                      else 'file-alt' if type == 'Examen'
+                                                      else 'flask' }} me-1"></i>
+                                {{ type }}
+                            </label>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+
+                    <!-- Section Détails améliorée -->
+                    <div class="mb-3">
+                        <label class="form-label fw-medium text-muted">Description détaillée</label>
+                        <div class="border rounded-2 bg-light">
+                            <textarea class="form-control border-0 bg-transparent"
+                                      name="details"
+                                      rows="5"
+                                      placeholder="Décrivez votre réclamation en détails..."
+                                      style="resize: none;"
+                                      required>{{ rec.details }}</textarea>
+                            <div class="text-end pe-3 pb-2">
+                                <small class="text-muted"><span id="charCount{{ rec.id_rec }}">{{ rec.details|length }}</span>/500</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer border-0">
+                    <button type="button" class="btn btn-secondary rounded-pill px-4" data-bs-dismiss="modal">Annuler</button>
+                    <button type="submit" class="btn btn-success rounded-pill px-4">
+                        <i class="fas fa-save me-2"></i>Enregistrer
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+</div>
+{% endfor %}
+
+<script>
+// Fonction améliorée avec gestion du compteur de caractères
+function toggleMatiereEdit(recId) {
+    const displaySpan = document.getElementById(`currentMatiere${recId}`);
+    const selectInput = document.getElementById(`matiereSelect${recId}`);
+
+    if (selectInput.classList.contains('d-none')) {
+        displaySpan.classList.add('d-none');
+        selectInput.classList.remove('d-none');
+        selectInput.classList.add('custom-select');
+        selectInput.focus();
+    } else {
+        displaySpan.classList.remove('d-none');
+        selectInput.classList.add('d-none');
+        selectInput.classList.remove('custom-select');
+    }
+}
+
+// Gestion du compteur de caractères
+document.querySelectorAll('[name="details"]').forEach(textarea => {
+    const recId = textarea.closest('.modal').id.replace('editReclamationModal', '');
+    const counter = document.getElementById(`charCount${recId}`);
+
+    textarea.addEventListener('input', function() {
+        counter.textContent = this.value.length;
+        if (this.value.length > 450) {
+            counter.classList.add('text-danger');
+        } else {
+            counter.classList.remove('text-danger');
+        }
+    });
+});
+</script>
+
+<script>
+// Fonctions pour gérer l'édition de la matière
+function toggleMatiereEdit(recId) {
+    const displaySpan = document.getElementById(`currentMatiere${recId}`);
+    const selectInput = document.getElementById(`matiereSelect${recId}`);
+
+    if (selectInput.classList.contains('d-none')) {
+        displaySpan.classList.add('d-none');
+        selectInput.classList.remove('d-none');
+        selectInput.focus();
+    } else {
+        displaySpan.classList.remove('d-none');
+        selectInput.classList.add('d-none');
+    }
+}
+
+function updateMatiereDisplay(recId) {
+    const selectInput = document.getElementById(`matiereSelect${recId}`);
+    const displaySpan = document.getElementById(`currentMatiere${recId}`);
+
+    displaySpan.textContent = selectInput.options[selectInput.selectedIndex].text;
+    toggleMatiereEdit(recId); // Rebasculer sur l'affichage
+}
+
+// Ajouter l'événement onchange pour chaque select
+document.querySelectorAll('[id^="matiereSelect"]').forEach(select => {
+    const recId = select.id.replace('matiereSelect', '');
+    select.addEventListener('change', () => updateMatiereDisplay(recId));
+});
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Conserver les fonctions existantes pour le compteur de caractères
+    const detailsTextarea = document.getElementById('details');
+    const charCount = document.getElementById('charCount');
+
+    if (detailsTextarea && charCount) {
+        // Mise à jour initiale
+        charCount.textContent = detailsTextarea.value.length;
+
+        // Mise à jour lors de la saisie
+        detailsTextarea.addEventListener('input', function() {
+            const count = this.value.length;
+            charCount.textContent = count;
+
+            // Changer la couleur quand on approche de la limite
+            if (count > 450) {
+                charCount.style.color = '#dc3545';
+            } else if (count > 400) {
+                charCount.style.color = '#fd7e14';
+            } else {
+                charCount.style.color = '';
+            }
+        });
+    }
+
+    // Gestion améliorée des types de réclamations
+    const matiereSelect = document.getElementById('matiere');
+    const typeContainer = document.getElementById('typeReclamationContainer');
+    const typeOptionsContainer = typeContainer?.querySelector('.type-options-container');
+    const hiddenSelect = document.getElementById('objet');
+
+    if (matiereSelect && typeOptionsContainer && hiddenSelect) {
+        matiereSelect.addEventListener('change', updateTypeReclamation);
+
+        // Fonction pour mettre à jour les types de réclamation
+        function updateTypeReclamation() {
+            const selectedMatiere = matiereSelect.options[matiereSelect.selectedIndex];
+            const dept = selectedMatiere?.dataset.dept;
+
+            // Réinitialiser les options
+            typeOptionsContainer.innerHTML = '';
+            hiddenSelect.innerHTML = '';
+
+            if (selectedMatiere && selectedMatiere.value) {
+                // Définir les types disponibles selon le département
+                const options = ['Devoir', 'Examen'];
+                if (dept === 'GCGP' || dept === 'GEER') options.push('TP');
+
+                // Mapper les types aux icônes
+                const typeIcons = {
+                    'Devoir': 'fa-book',
+                    'Examen': 'fa-file-alt',
+                    'TP': 'fa-flask'
+                };
+
+                // Création des options visuelles
+                options.forEach(type => {
+                    // Créer l'option visuelle
+                    const typeOption = document.createElement('div');
+                    typeOption.className = `type-option type-${type.toLowerCase()}`;
+                    typeOption.dataset.value = type;
+
+                    // Ajouter l'icône
+                    const icon = document.createElement('i');
+                    icon.className = `fas ${typeIcons[type]} type-icon`;
+                    typeOption.appendChild(icon);
+
+                    // Ajouter le texte
+                    const text = document.createElement('span');
+                    text.textContent = type;
+                    typeOption.appendChild(text);
+
+                    // Ajouter l'icône de check
+                    const checkMark = document.createElement('i');
+                    checkMark.className = 'fas fa-check check-mark';
+                    typeOption.appendChild(checkMark);
+
+                    // Ajouter l'événement de clic
+                    typeOption.addEventListener('click', function() {
+                        this.classList.toggle('selected');
+                        updateHiddenSelect();
+                    });
+
+                    // Ajouter au conteneur
+                    typeOptionsContainer.appendChild(typeOption);
+
+                    // Créer l'option correspondante dans le select caché
+                    const hiddenOption = document.createElement('option');
+                    hiddenOption.value = type;
+                    hiddenOption.textContent = type;
+                    hiddenSelect.appendChild(hiddenOption);
+                });
+
+                // Activer le conteneur
+                typeContainer.classList.remove('disabled');
+            } else {
+                // Message quand aucune matière n'est sélectionnée
+                const message = document.createElement('div');
+                message.className = 'text-muted fst-italic';
+                message.textContent = 'Veuillez d\'abord sélectionner une matière';
+                typeOptionsContainer.appendChild(message);
+
+                // Désactiver le conteneur
+                typeContainer.classList.add('disabled');
+            }
+        }
+
+        // Fonction pour mettre à jour le select caché (compatibilité backend)
+        function updateHiddenSelect() {
+            // Désélectionner toutes les options
+            Array.from(hiddenSelect.options).forEach(opt => opt.selected = false);
+
+            // Sélectionner les options correspondant aux éléments visuels sélectionnés
+            const selectedOptions = typeOptionsContainer.querySelectorAll('.type-option.selected');
+            selectedOptions.forEach(option => {
+                const value = option.dataset.value;
+                const correspondingOption = Array.from(hiddenSelect.options).find(opt => opt.value === value);
+                if (correspondingOption) correspondingOption.selected = true;
+            });
+
+            // Déclencher l'événement change pour validation
+            const event = new Event('change');
+            hiddenSelect.dispatchEvent(event);
+        }
+
+        // Initialiser au chargement
+        updateTypeReclamation();
+    }
+
+    // Validation du formulaire
+    const reclamationForm = document.getElementById('reclamationForm');
+    if (reclamationForm) {
+        reclamationForm.addEventListener('submit', function(event) {
+            // Réinitialiser les erreurs précédentes
+            document.querySelectorAll('.is-invalid').forEach(el => {
+                el.classList.remove('is-invalid');
+            });
+            typeContainer?.classList.remove('is-invalid');
+
+            let isValid = true;
+
+            // Vérifier matière
+            if (!matiereSelect.value) {
+                matiereSelect.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Vérifier type de réclamation
+            const selectedValues = Array.from(hiddenSelect.options)
+                .filter(option => option.selected)
+                .map(option => option.value);
+
+            if (selectedValues.length === 0) {
+                typeContainer.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Vérifier description
+            if (!detailsTextarea.value.trim()) {
+                detailsTextarea.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    }
+});
+
+// Conserver la fonction existante pour l'avertissement de matière déjà réclamée
+function showClaimedWarning(selectElement) {
+    const warning = document.getElementById('claimedWarning');
+    const option = selectElement.options[selectElement.selectedIndex];
+
+    if (option && option.classList.contains('text-muted')) {
+        warning.style.display = 'block';
+    } else {
+        warning.style.display = 'none';
+    }
+}
+</script>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Initialiser le compteur de caractères
+    const detailsTextarea = document.getElementById('details');
+    const charCount = document.getElementById('charCount');
+
+    if (detailsTextarea && charCount) {
+        // Mise à jour initiale
+        charCount.textContent = detailsTextarea.value.length;
+
+        // Mise à jour lors de la saisie
+        detailsTextarea.addEventListener('input', function() {
+            const count = this.value.length;
+            charCount.textContent = count;
+
+            // Changer la couleur quand on approche de la limite
+            if (count > 450) {
+                charCount.style.color = '#dc3545';
+            } else if (count > 400) {
+                charCount.style.color = '#fd7e14';
+            } else {
+                charCount.style.color = '';
+            }
+        });
+    }
+
+    // Gestion dynamique des types de réclamations
+    const matiereSelect = document.getElementById('matiere');
+    const typeReclamationSelect = document.getElementById('objet');
+
+    if (matiereSelect && typeReclamationSelect) {
+        matiereSelect.addEventListener('change', updateTypeReclamation);
+
+        // Fonction pour mettre à jour les types de réclamation
+        function updateTypeReclamation() {
+            const selectedMatiere = matiereSelect.options[matiereSelect.selectedIndex];
+            const dept = selectedMatiere?.dataset.dept;
+
+            // Réinitialiser les options
+            typeReclamationSelect.innerHTML = '<option value="">Type de réclamation</option>';
+              if (selectedMatiere?.value) {
+        const options = ['Devoir', 'Examen'];
+        if (dept === 'GCGP' || dept === 'GEER') options.push('TP');
+
+        options.forEach(option => {
+            typeReclamationSelect.add(new Option(option, option));
+        });
+        typeReclamationSelect.disabled = false;
+    } else {
+        typeReclamationSelect.innerHTML = '<option value="" disabled>Type de réclamation</option>';
+        typeReclamationSelect.disabled = true;
+    }
+}
+            // Si une matière est sélectionnée
+            if (selectedMatiere && selectedMatiere.value) {
+                const options = ['Devoir', 'Examen'];
+                if (dept === 'GCGP' || dept === 'GEER') options.push('TP');
+
+                options.forEach(option => {
+                    const optionElement = new Option(option, option);
+                    typeReclamationSelect.add(optionElement);
+                });
+
+                // Activer le select
+                typeReclamationSelect.disabled = false;
+            } else {
+                // Désactiver le select si aucune matière n'est sélectionnée
+                typeReclamationSelect.disabled = true;
+            }
+        }
+
+        // Initialiser au chargement
+        updateTypeReclamation();
+    }
+
+    // Validation du formulaire
+    const reclamationForm = document.getElementById('reclamationForm');
+    if (reclamationForm) {
+        reclamationForm.addEventListener('submit', function(event) {
+            // Réinitialiser les erreurs précédentes
+            document.querySelectorAll('.is-invalid').forEach(el => {
+                el.classList.remove('is-invalid');
+            });
+
+            let isValid = true;
+
+            // Vérifier matière
+            if (!matiereSelect.value) {
+                matiereSelect.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Vérifier type de réclamation
+            if (!typeReclamationSelect.value) {
+                typeReclamationSelect.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            // Vérifier description
+            if (!detailsTextarea.value.trim()) {
+                detailsTextarea.classList.add('is-invalid');
+                isValid = false;
+            }
+
+            if (!isValid) {
+                event.preventDefault();
+            }
+        });
+    }
+});
+
+// Fonction pour afficher l'avertissement de matière déjà réclamée
+function showClaimedWarning(selectElement) {
+    const warning = document.getElementById('claimedWarning');
+    const option = selectElement.options[selectElement.selectedIndex];
+
+    if (option && option.classList.contains('text-muted')) {
+        warning.style.display = 'block';
+    } else {
+        warning.style.display = 'none';
+    }
+}
+</script>
+
+
+<!-- JavaScript pour les fonctionnalités avancées -->
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+
+document.addEventListener('DOMContentLoaded', function() {
+    const matiereSelect = document.getElementById('matiere');
+    const typeReclamationSelect = document.getElementById('objet');
+
+    function updateTypeReclamation() {
+    const selectedMatiere = matiereSelect.options[matiereSelect.selectedIndex];
+    const dept = selectedMatiere?.dataset.dept;
+    console.log('Département détecté:', dept); // Debug
+
+    typeReclamationSelect.innerHTML = '<option value="">Type de réclamation</option>';
+    const options = ['Devoir', 'Examen'];
+    if (dept === 'GCGP' || dept === 'GEER') options.push('TP');
+
+    options.forEach(option => {
+        typeReclamationSelect.add(new Option(option, option));
+    });
+}
+
+    if(matiereSelect && typeReclamationSelect) {
+        matiereSelect.addEventListener('change', updateTypeReclamation);
+        updateTypeReclamation();
+    }
+
+    // Gestion du compteur de caractères
+    const detailsTextarea = document.getElementById('details');
+    const charCount = document.getElementById('charCount');
+    if(detailsTextarea && charCount) {
+        detailsTextarea.addEventListener('input', () => {
+            charCount.textContent = detailsTextarea.value.length;
+        });
+    }
+});
+
       function checkDeadline() {
     const now = new Date();
     const fermeture = {% if date_fermeture %}new Date("{{ date_fermeture.isoformat() }}"){% else %}null{% endif %};
@@ -396,6 +956,7 @@ function checkDeadline() {
 checkDeadline();
 // Vérification toutes les minutes
 setInterval(checkDeadline, 60000);
+
 </script>
 </body>
 </html>

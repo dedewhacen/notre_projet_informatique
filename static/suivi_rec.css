@@ -1,0 +1,355 @@
+
+/* Styles pour le tableau amélioré */
+.table th {
+    font-weight: 600;
+    white-space: nowrap;
+}
+
+.table th.sortable {
+    cursor: pointer;
+    transition: background-color 0.2s;
+}
+
+.table th.sortable:hover {
+    background-color: rgba(0,0,0,0.02);
+}
+
+.table th.sort-asc i, .table th.sort-desc i {
+    color: #2980b9 !important;
+}
+
+/* États des statuts améliorés */
+.status-chip {
+    padding: 0.45rem 0.9rem;
+    font-size: 0.8rem;
+    font-weight: 500;
+    border-radius: 50rem;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    display: inline-flex;
+    align-items: center;
+    transition: all 0.3s;
+}
+
+.status-chip.accepté {
+    background: #d1fae5;
+    color: #065f46;
+    border: 1px solid #34d399;
+}
+
+.status-chip.refusé {
+    background: #fee2e2;
+    color: #991b1b;
+    border: 1px solid #f87171;
+}
+
+.status-chip.en-attente {
+    background: #fef3c7;
+    color: #92400e;
+    border: 1px solid #fbbf24;
+}
+
+/* Amélioration des boutons */
+.btn-sm {
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.btn-sm:active {
+    transform: scale(0.97);
+}
+
+/* Effets de survol des lignes du tableau */
+.table-hover tbody tr {
+    transition: background-color 0.15s ease-in-out;
+}
+
+/* Amélioration pour les écrans mobiles */
+@media (max-width: 768px) {
+    .description-cell {
+        max-width: 150px !important;
+    }
+
+    .card-header {
+        flex-direction: column;
+        align-items: flex-start !important;
+    }
+
+    .card-header h5 {
+        margin-bottom: 10px;
+    }
+
+    .btn-sm {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.75rem;
+    }
+
+    .table th {
+        font-size: 0.85rem;
+    }
+}
+
+/* Animation pour les nouveaux éléments */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.no-results, .no-results-search {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Pour les tooltips */
+.tooltip .tooltip-inner {
+    max-width: 300px;
+    padding: 8px 12px;
+    background-color: rgba(0, 0, 0, 0.85);
+    font-size: 0.85rem;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+}
+/* Styles pour le formulaire de réclamation */
+.form-section-title {
+    font-weight: 600;
+    color: #4b79a1;
+}
+
+.dynamic-input {
+    border: 1px solid #ced4da;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.dynamic-input:focus {
+    border-color: #5e9ad1;
+    box-shadow: 0 0 0 0.25rem rgba(94, 154, 209, 0.25);
+}
+
+.form-floating > .form-control:focus ~ label,
+.form-floating > .form-select:focus ~ label {
+    color: #4b79a1;
+}
+
+.form-floating > .form-control:disabled,
+.form-floating > .form-control:read-only {
+    background-color: #f8f9fa;
+    cursor: not-allowed;
+}
+
+.character-counter {
+    font-size: 0.85rem;
+}
+
+#charCount {
+    font-weight: 600;
+}
+
+.submit-btn {
+    background: linear-gradient(135deg, #4b79a1 0%, #5e9ad1 100%);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 500;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+}
+
+.submit-btn:hover {
+    background: linear-gradient(135deg, #5e9ad1 0%, #79c2eb 100%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.submit-btn:active {
+    transform: translateY(0);
+}
+
+/* Amélioration pour le warning de matière déjà réclamée */
+#claimedWarning {
+    font-size: 0.9rem;
+    border-left: 4px solid orange;
+    transition: all 0.3s ease;
+}
+
+/* Indication visuelle pour les champs obligatoires */
+.form-floating > label::after {
+    content: " *";
+    color: #dc3545;
+    font-weight: bold;
+}
+
+/* Animation pour le formulaire */
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.modal-content {
+    animation: fadeIn 0.3s ease;
+}
+
+/* Style pour les options désactivées */
+select option:disabled {
+    color: #adb5bd;
+    font-style: italic;
+}
+
+/* Responsive adjustments for smaller screens */
+@media (max-width: 768px) {
+    .modal-dialog {
+        margin: 0.5rem;
+    }
+
+    .card-header {
+        padding: 0.75rem;
+    }
+
+    .form-floating {
+        margin-bottom: 0.5rem;
+    }
+}
+
+/* Dans static/suivi_rec.css */
+.select-multiple-enhanced {
+    border: 2px solid #dee2e6;
+    transition: border-color 0.3s ease;
+}
+
+.select-multiple-enhanced:focus {
+    border-color: #0d6efd;
+    box-shadow: 0 0 0 0.25rem rgba(13, 110, 253, 0.25);
+}
+
+.select-multiple-enhanced option {
+    padding: 8px 12px;
+    border-bottom: 1px solid #eee;
+}
+
+.select-multiple-enhanced option:hover {
+    background-color: #f8f9fa !important;
+}
+
+.select-multiple-enhanced option:checked {
+    background-color: #e7f1ff !important;
+    color: #0a58ca !important;
+    font-weight: 500;
+}
+
+.type-reclamation-box {
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.type-reclamation-box:hover {
+    border-color: #80bdff;
+}
+
+.type-reclamation-box.is-invalid {
+    border-color: #dc3545;
+}
+
+/* Styles pour les options de type */
+.type-option {
+    background-color: #f8f9fa;
+    border: 1px solid #dee2e6;
+    border-radius: 6px;
+    padding: 8px 16px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    position: relative;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.type-option:hover {
+    background-color: #e9ecef;
+    border-color: #ced4da;
+    transform: translateY(-2px);
+    box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+}
+
+.type-option.selected {
+    background-color: rgba(13, 110, 253, 0.1);
+    border-color: #0d6efd;
+    font-weight: 500;
+}
+
+.type-option.selected.type-devoir {
+    background-color: rgba(253, 126, 20, 0.1);
+    border-color: #fd7e14;
+}
+
+.type-option.selected.type-examen {
+    background-color: rgba(220, 53, 69, 0.1);
+    border-color: #dc3545;
+}
+
+.type-option.selected.type-tp {
+    background-color: rgba(25, 135, 84, 0.1);
+    border-color: #198754;
+}
+
+/* Styles pour les icônes */
+.type-option .type-icon {
+    font-size: 1rem;
+    color: #6c757d;
+    transition: all 0.2s ease;
+}
+
+.type-option.selected .type-icon {
+    color: #0d6efd;
+}
+
+.type-option.selected.type-devoir .type-icon {
+    color: #fd7e14;
+}
+
+.type-option.selected.type-examen .type-icon {
+    color: #dc3545;
+}
+
+.type-option.selected.type-tp .type-icon {
+    color: #198754;
+}
+
+/* Animation de check */
+.type-option .check-mark {
+    position: absolute;
+    right: 10px;
+    opacity: 0;
+    transform: scale(0);
+    transition: all 0.2s ease;
+}
+
+.type-option.selected .check-mark {
+    opacity: 1;
+    transform: scale(1);
+}
+/* Dans static/suivi_rec.css */
+.btn-success {
+    background-color: #28a745;
+    border-color: #28a745;
+}
+
+.btn-success:hover {
+    background-color: #218838;
+    border-color: #1e7e34;
+}
+   .matiere-edit-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+    }
+    .edit-matiere-btn {
+        position: static;
+        transform: none;
+        padding: 0.25rem;
+    }
+    .matiere-display {
+        flex-grow: 1;
+        padding: 0.375rem 0.75rem;
+        border: 1px solid #ced4da;
+        border-radius: 0.375rem;
+    }

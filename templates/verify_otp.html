@@ -1,0 +1,185 @@
+<!DOCTYPE html>
+<html lang="fr" class="h-100">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vérification OTP - ISME</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --bs-primary: #004085;
+            --bs-danger: rgba(220, 53, 69, 0.9); /* Rouge transparent */
+        }
+
+        body {
+            background: linear-gradient(rgba(0, 0, 0, 0.5), rgba(0, 0, 0, 0.5)),
+                        url('{{ url_for('static', filename='polytechnique.jpg') }}') no-repeat center center fixed;
+            background-size: cover;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .auth-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 1rem;
+            box-shadow: 0 0.5rem 1rem rgba(0, 0, 0, 0.15);
+            max-width: 450px;
+            margin: 2rem auto;
+            border: none;
+        }
+
+        .form-control {
+            transition: all 0.3s ease;
+            border: 1px solid rgba(var(--bs-primary-rgb), 0.2);
+            padding: 0.75rem 1rem;
+        }
+
+        .btn-primary {
+            background-color: var(--bs-primary);
+            border: none;
+            transition: all 0.3s ease;
+        }
+
+        .btn-primary:hover {
+            background-color: #002752;
+            transform: translateY(-1px);
+        }
+
+        .input-group-text {
+            background: rgba(var(--bs-primary-rgb), 0.1);
+            border-color: rgba(var(--bs-primary-rgb), 0.2);
+        }
+
+        .progress-bar {
+            transition: width 1s linear, background-color 0.3s ease;
+        }
+
+
+    </style>
+</head>
+<body class="d-flex align-items-center min-vh-100">
+    <div class="container my-auto py-5">
+        <div class="row justify-content-center">
+            <div class="col-12 col-md-10 col-lg-8">
+                <div class="card auth-card">
+                    <div class="card-header bg-transparent border-0 pt-4">
+                        <div class="text-center">
+                            <img src="{{ url_for('static', filename='LOGO.jpg') }}"
+                                 alt="Logo ISME"
+                                 class="mb-4"
+                                 style="height: 100px; width: auto;">
+                            <h3 class="h3 text-primary mb-3">Vérification du code</h3>
+                        </div>
+                    </div>
+
+                    <div class="card-body px-4 py-3">
+                        {% with messages = get_flashed_messages(with_categories=true) %}
+                            {% if messages %}
+                                {% for category, message in messages %}
+                                    <div class="alert alert-{{ category }} alert-dismissible fade show">
+                                        {{ message }}
+                                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                                    </div>
+                                {% endfor %}
+                            {% endif %}
+                        {% endwith %}
+
+                        <form method="POST" action="{{ url_for('verify_otp') }}">
+                            <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+
+                            <div class="mb-4">
+                                <label for="otp" class="form-label fw-medium">Code de vérification</label>
+                                <div class="input-group">
+                                    <span class="input-group-text">
+                                        <i class="fas fa-shield-alt text-muted"></i>
+                                    </span>
+                                    <input type="text"
+                                           class="form-control text-center fw-bold"
+                                           id="otp"
+                                           name="otp"
+                                           inputmode="numeric"
+                                           pattern="\d{6}"
+                                           maxlength="6"
+                                           style="letter-spacing: 0.5em;"
+                                           required>
+                                </div>
+                            </div>
+
+                            <div class="d-grid gap-2 mb-4">
+                                <button type="submit" class="btn btn-primary btn-lg py-3">
+                                    <i class="fas fa-check-circle me-2"></i>Rentre le code
+                                </button>
+                            </div>
+                        </form>
+
+                        <div class="text-center">
+                            <div class="alert alert-info py-2 mb-3">
+                                <div class="d-flex justify-content-between align-items-center">
+                                    <small>
+                                        <i class="fas fa-clock me-1"></i>Temps restant :
+                                    </small>
+                                    <span id="countdown" class="fw-medium badge bg-dark">{{ remaining_time }}</span>
+                                </div>
+                                <div class="progress mt-2" style="height: 3px;">
+                                    <div id="progress-bar" class="progress-bar bg-info" role="progressbar"></div>
+                                </div>
+                            </div>
+                            <a href="{{ url_for('forgot_password') }}" class="text-decoration-none small">
+                                <i class="fas fa-arrow-left me-2"></i>Retour
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // Compte à rebours amélioré
+        const startTime = Date.now();
+        const initialTime = {{ remaining_time * 60 }};
+        let timer = initialTime;
+        const countdownElement = document.getElementById('countdown');
+        const progressBar = document.getElementById('progress-bar');
+
+        const formatTime = (seconds) => {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        };
+
+        const updateDisplay = () => {
+            const elapsed = Math.floor((Date.now() - startTime) / 1000);
+            timer = initialTime - elapsed;
+
+            countdownElement.textContent = formatTime(timer > 0 ? timer : 0);
+            const progress = (timer / initialTime) * 100;
+            progressBar.style.width = `${Math.max(progress, 0)}%`;
+
+            if(timer <= 10) {
+                progressBar.classList.remove('bg-info');
+                progressBar.classList.add('bg-danger');
+                countdownElement.classList.add('text-danger');
+            }
+
+            if(timer <= 0) {
+                clearInterval(interval);
+                document.querySelector('button[type="submit"]').disabled = true;
+                countdownElement.textContent = 'EXPIRÉ';
+                progressBar.style.width = '0%';
+                setTimeout(() => {
+                    window.location.href = "{{ url_for('forgot_password') }}";
+                }, 3000);
+            }
+        };
+
+        // Mise à jour initiale
+        updateDisplay();
+        const interval = setInterval(updateDisplay, 1000);
+    </script>
+</body>
+</html>

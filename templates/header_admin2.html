@@ -1,0 +1,69 @@
+<link rel="stylesheet" href="static/header2.css">
+<header class="admin-gradient text-white shadow-sm">
+    <div class="container-fluid">
+        <div class="d-flex justify-content-between align-items-center py-1">
+            <div class="d-flex align-items-center gap-3">
+                <div class="logo-container">
+                    <img src="{{ url_for('static', filename='LOGO.jpg') }}"
+                         alt="Logo ISME"
+                         class="brand-logo">
+                </div>
+                <div class="brand-info">
+                    <h1 class="brand-title mb-0">Gestion des Réclamations</h1>
+                    <div class="brand-subtitle">Institut Supérieur des Métiers de l'Entreprise</div>
+                </div>
+            </div>
+
+                    <div class="d-flex align-items-center gap-3 ms-auto ">
+                <!-- Menu Imprimer -->
+                <div class="dropdown ms-2">
+                    <button class="btn btn-primary btn-sm dropdown-toggle" type="button" id="printDropdown" data-bs-toggle="dropdown">
+                        <i class="fas fa-print me-1"></i> Imprimer le résultat
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li><a class="dropdown-item" href="#" onclick="printTable(true)"><i class="fas fa-print me-2"></i>Imprimer directement</a></li>
+                        <li><a class="dropdown-item" href="#" onclick="exportToPDF()"><i class="fas fa-file-pdf me-2"></i>Exporter en PDF</a></li>
+                    </ul>
+                </div>
+                      <button class="btn btn-nouveau btn-sm rounded-pill position-relative"
+                    data-bs-toggle="modal"
+                    data-bs-target="#statsModal"
+                    style="padding: 0.5rem 1.2rem;">
+                <i class="fas fa-chart-pie me-2"></i> <!-- Icône modifiée -->
+                <span class="d-none d-md-inline">Statistiques</span>
+                <span class="position-absolute top-0 start-100 translate-middle p-1 bg-danger border border-light rounded-circle"
+                      style="display: none;"
+                      id="statsNotification">
+                </span>
+            </button>
+
+                <!-- Menu global Outils -->
+                <div class="dropdown">
+                    <button class="btn btn-light btn-sm dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                        <i class="fas fa-sliders-h me-1"></i>
+                        <span class="d-none d-md-inline">Outils</span>
+                    </button>
+                    <ul class="dropdown-menu dropdown-menu-end shadow">
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="{{ url_for('parametres_admin') }}">
+                                <i class="fas fa-cog text-primary me-2"></i> Paramètres système
+                            </a>
+                        </li>
+                        <li>
+                            <a class="dropdown-item d-flex align-items-center" href="{{ url_for('parametres_compte_admin') }}">
+                                <i class="fas fa-user-cog text-info me-2"></i> Paramètres du compte
+                            </a>
+                        </li>
+                        <li><hr class="dropdown-divider"></li>
+                    </ul>
+                </div>
+
+                <!-- Bouton Déconnexion -->
+                <a href="{{ url_for('logout') }}" class="btn btn-danger btn-sm rounded-pill" title="Déconnexion">
+                    <i class="fas fa-sign-out-alt"></i>
+                    <span class="d-none d-md-inline ms-1">Déconnexion</span>
+                </a>
+            </div>
+        </div>
+    </div>
+</header>
