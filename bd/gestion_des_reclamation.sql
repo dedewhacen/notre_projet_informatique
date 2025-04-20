@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Host: 127.0.0.1
--- Generation Time: Apr 17, 2025 at 12:43 AM
+-- Generation Time: Apr 20, 2025 at 01:38 PM
 -- Server version: 5.6.17
 -- PHP Version: 5.5.12
 
@@ -35,14 +35,14 @@ CREATE TABLE IF NOT EXISTS `configuration_reclamation` (
   PRIMARY KEY (`id`),
   UNIQUE KEY `unique_config` (`niveau`,`date_fermeture`),
   KEY `idx_date_fermeture` (`date_fermeture`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=12 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=15 ;
 
 --
 -- Dumping data for table `configuration_reclamation`
 --
 
 INSERT INTO `configuration_reclamation` (`id`, `niveau`, `code_mat`, `date_ouverture`, `date_fermeture`) VALUES
-(10, 'L1', 'GCGP_21,GCGP_22,GCGP_23,GCGP_24,GCGP_25,GCGP_26,GCGP_27,GEER_21,GEER_22,GEER_23,GEER_24,GEER_25,GEER_26,HE_21,HE_22,HE_23,ST_21,ST_22,ST_23', '0000-00-00 00:00:00', '2025-04-18 12:24:00');
+(14, 'L2', 'GCGP_41,GCGP_42,GCGP_43,GCGP_44,GCGP_45,GCGP_46,GEER_41,GEER_42,GEER_43,GEER_44,GEER_45,GEER_46,HE_41,HE_42,HE_43,ST_41', '0000-00-00 00:00:00', '2025-04-20 22:08:00');
 
 -- --------------------------------------------------------
 
@@ -65,12 +65,14 @@ CREATE TABLE IF NOT EXISTS `etudiant` (
 --
 
 INSERT INTO `etudiant` (`matricule_etd`, `Email`, `Departement`, `Licence`, `pwd`) VALUES
+(20, 'dedewhacen@gmail.com', 'GCGP', 'L3', '$2b$12$aHk3S.AwkeBC52cD34NQVu9u.5HLoJ66b6Jxax7y87kfA0mDUqzqi'),
 (20542, '20542@isme.esp.mr', 'GCGP', 'L3', '1234'),
 (20543, '20543@isme.esp.mr', 'GEER', 'L3', '1234'),
-(23501, '23501@isme.esp.mr', 'GCGP', 'L1', '1111'),
-(23502, '23502@isme.esp.mr', 'GEER', 'L2', '1234'),
+(23501, '23501@isme.esp.mr', 'GCGP', 'L1', '$2b$12$Nt1lWb4Ny5.wcN1ufW330OYnrgx5yY8L0ifheWsdoAI2NAcdEvum.'),
+(23502, '23502@isme.esp.mr', 'GEER', 'L2', '$2b$12$ucKvY7DR5ez9.ZxVqTwfzu8RzLXsJWGBSU1YiqaVKVFaejaYSfuT6'),
 (23503, '23503@isme.esp.mr', 'GEER', 'L1', '123'),
-(23504, '23504@isme.esp.mr', 'GCGP', 'L2', '1234');
+(23504, '23504@isme.esp.mr', 'GCGP', 'L2', '$2b$12$islC0XCDkkiL1t.YxLahAuuAZqHN.on868yASsLD1Msy2/CnZ9rqm'),
+(23542, '23542@isme.esp.mr', 'GCGP', 'L2', '$2b$12$TbJNf8jjz7Fe5ruc6S02ouEolv4l4r9V0GtXvM6WD7QGNlmskOlD6');
 
 -- --------------------------------------------------------
 
@@ -202,7 +204,7 @@ CREATE TABLE IF NOT EXISTS `reclamation` (
   KEY `matricule_etd` (`matricule_etd`),
   KEY `code_mat` (`code_mat`),
   KEY `idx_config_id` (`config_id`)
-) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=117 ;
+) ENGINE=InnoDB  DEFAULT CHARSET=latin1 AUTO_INCREMENT=139 ;
 
 --
 -- Dumping data for table `reclamation`
@@ -225,10 +227,15 @@ INSERT INTO `reclamation` (`id_rec`, `Détails`, `Objet_rec`, `moment_de_creatio
 (110, '43', 'Examen', '2025-04-11 18:10:28', 20543, 'GEER_55', 'Accepté', NULL),
 (111, '42', 'Examen', '2025-04-11 18:11:12', 20542, 'GCGP_57', 'Accepté', NULL),
 (112, '222222', 'Examen', '2025-04-11 18:12:06', 23501, 'GCGP_25', 'Accepté', NULL),
-(113, '04', 'Devoir', '2025-04-11 18:13:15', 23504, 'GCGP_44', 'En attente', NULL),
 (114, '02', 'Devoir', '2025-04-11 18:13:54', 23502, 'GEER_42', 'En attente', NULL),
 (115, 'wwwwawww', 'Devoir', '2025-04-14 12:03:12', 23502, 'HE_41', 'Accepté', NULL),
-(116, 'sssssssssssssss', 'Devoir', '2025-04-16 19:08:39', 23501, 'HE_23', 'En attente', 10);
+(116, 'sssssssssssssss', 'Devoir', '2025-04-16 19:08:39', 23501, 'HE_23', 'En attente', NULL),
+(117, 'hhhhh', 'Devoir', '2025-04-19 17:42:30', 23504, 'GCGP_42', 'En attente', NULL),
+(120, '2002', 'Examen', '2025-04-19 18:10:54', 23504, 'GCGP_45', 'En attente', NULL),
+(123, '04', 'Devoir', '2025-04-19 18:19:57', 23504, 'GCGP_44', 'En attente', NULL),
+(124, 'joli', 'Devoir', '2025-04-19 18:52:01', 23504, 'HE_42', 'En attente', NULL),
+(134, '04', 'Devoir, Examen', '2025-04-20 00:25:17', 23504, 'ST_41', 'En attente', 14),
+(137, 'hhhhhhhhhhhhhhhhhhhhhh', 'TP', '2025-04-20 01:58:28', 23504, 'GCGP_41', 'Accepté', 14);
 
 -- --------------------------------------------------------
 
@@ -238,7 +245,7 @@ INSERT INTO `reclamation` (`id_rec`, `Détails`, `Objet_rec`, `moment_de_creatio
 
 CREATE TABLE IF NOT EXISTS `user` (
   `email_admin` varchar(23) NOT NULL,
-  `pwd_admin` varchar(255) NOT NULL
+  `pwd_admin` varchar(60) DEFAULT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1;
 
 --
@@ -246,7 +253,7 @@ CREATE TABLE IF NOT EXISTS `user` (
 --
 
 INSERT INTO `user` (`email_admin`, `pwd_admin`) VALUES
-('admin@isme.esp.mr', '$2b$12$EixZaYVK1fsbw1ZfbX3OXePaWxn96p36WQoeG6Lruj3vjPGga31lW');
+('admin@isme.esp.mr', '$2b$12$.9bNk14onlywcKI/raiiDuH45oFdQ200Ea3sSL7aMltBO8Qo40YG2');
 
 --
 -- Constraints for dumped tables
