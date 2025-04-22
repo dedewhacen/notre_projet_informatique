@@ -387,6 +387,9 @@ def get_stats():
 # Paramètres du compte admin
 @app.route('/parametres_compte_admin')
 def parametres_compte_admin():
+    if not session.get('logged_in') or session.get('role') != 'admin':
+        flash("Accès réservé aux administrateurs.", "danger")
+        return redirect(url_for('login'))
     cursor.execute("SELECT email_admin, pwd_admin FROM user WHERE email_admin = %s", (session['user_email'],))
     admin_data = cursor.fetchone()
     return render_template('parametres_compte_admin.html', admin=admin_data)
@@ -1255,135 +1258,7 @@ def gestion_etudiants():
             'total': total,
             'pages': (total // per_page) + (1 if total % per_page else 0)
         }
-    )
-@app.route('/gestion_matieres', methods=['GET', 'POST'])
-def gestion_matieres():
-    # Vérification des permissions
-    if not session.get('logged_in') or session.get('role') != 'admin':
-        flash("Accès réservé aux administrateurs", "danger")
-        return redirect(url_for('login'))
-
-    # Récupération des paramètres de filtrage et pagination
-    page = request.args.get('page', 1, type=int)
-    niveau = request.args.get('niveau')
-    semestre = request.args.get('semestre')
-    per_page = 10
-    offset = (page - 1) * per_page
-
-    # Construction dynamique des requêtes SQL
-    base_query = "SELECT code_mat, niveau_de_licence, semestre, dept_mat FROM matiere"
-    count_query = "SELECT COUNT(*) FROM matiere"
-    conditions = []
-    params = []
-
-    # Ajout des conditions de filtrage
-    if niveau:
-        conditions.append("niveau_de_licence = %s")
-        params.append(niveau)
-    if semestre:
-        conditions.append("semestre = %s")
-        params.append(semestre)
-
-    where_clause = " WHERE " + " AND ".join(conditions) if conditions else ""
-
-    # Gestion des requêtes POST
-    if request.method == 'POST':
-        # Modification de matière
-        if 'edit_matiere' in request.form:
-            try:
-                cursor.execute("""
-                    UPDATE matiere SET
-                        niveau_de_licence = %s,
-                        semestre = %s,
-                        dept_mat = %s
-                    WHERE code_mat = %s
-                """, (
-                    request.form['niveau'],
-                    request.form['semestre'],
-                    request.form['dept'],
-                    request.form['code']
-                ))
-                conn.commit()
-                flash("Matière mise à jour avec succès", "success")
-            except Exception as e:
-                conn.rollback()
-                flash(f"Erreur de modification : {str(e)}", "danger")
-
-        # Ajout de matière
-        elif 'add_matiere' in request.form:
-            try:
-                cursor.execute("""
-                    INSERT INTO matiere (code_mat, niveau_de_licence, semestre, dept_mat)
-                    VALUES (%s, %s, %s, %s)
-                """, (
-                    request.form['code'],
-                    request.form['niveau'],
-                    request.form['semestre'],
-                    request.form['dept']
-                ))
-                conn.commit()
-                flash("Matière ajoutée avec succès", "success")
-            except mysql.connector.IntegrityError:
-                conn.rollback()
-                flash("Ce code matière existe déjà", "danger")
-            except Exception as e:
-                conn.rollback()
-                flash(f"Erreur d'ajout : {str(e)}", "danger")
-
-        # Suppression multiple
-        elif 'delete_selected' in request.form:
-            selected = request.form.getlist('matieres[]')
-            if selected:
-                try:
-                    placeholders = ','.join(['%s'] * len(selected))
-                    cursor.execute(f"""
-                        DELETE FROM matiere
-                        WHERE code_mat IN ({placeholders})
-                    """, tuple(selected))
-                    conn.commit()
-                    flash(f"{cursor.rowcount} matière(s) supprimée(s)", "success")
-                except Exception as e:
-                    conn.rollback()
-                    flash(f"Erreur de suppression : {str(e)}", "danger")
-
-        # Redirection avec conservation des filtres
-        return redirect(url_for('gestion_matieres',
-                               niveau=niveau,
-                               semestre=semestre,
-                               page=page))
-
-    # Récupération des données filtrées et paginées
-    try:
-        # Requête pour les données
-        data_query = f"{base_query}{where_clause} ORDER BY code_mat LIMIT %s OFFSET %s"
-        cursor.execute(data_query, params + [per_page, offset])
-        columns = [col[0] for col in cursor.description]
-        matieres = [dict(zip(columns, row)) for row in cursor.fetchall()]
-
-        # Requête pour le total
-        cursor.execute(f"{count_query}{where_clause}", params)
-        total = cursor.fetchone()[0]
-
-    except Exception as e:
-        flash(f"Erreur de base de données : {str(e)}", "danger")
-        matieres = []
-        total = 0
-
-    # Calcul de la pagination
-    pagination = {
-        'page': page,
-        'per_page': per_page,
-        'total': total,
-        'pages': (total + per_page - 1) // per_page,
-        'niveau': niveau,
-        'semestre': semestre
-    }
-
-    return render_template(
-        'gestion_matieres.html',
-        matieres=matieres,
-        pagination=pagination
-    )
+       )
 @app.route('/logout')
 def logout():
     # Supprime toutes les données de session

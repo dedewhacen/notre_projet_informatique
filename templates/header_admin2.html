@@ -10,44 +10,18 @@
                 </div>
                 <div class="brand-info">
                     <h1 class="brand-title mb-0">Gestion des Réclamations</h1>
-                    <div class="brand-subtitle">Institut Supérieur des Métiers de l'Entreprise</div>
+                    <div class="brand-subtitle">Institut Supérieur des Métiers de l'Energie</div>
                 </div>
             </div>
 
-            <div class="d-flex align-items-center gap-3">
-                <!-- New Gestion Dropdown -->
-                <div class="dropdown">
-    <button class="btn btn-primary btn-sm dropdown-toggle d-flex align-items-center"
-            type="button"
-            id="gestionDropdown"
-            data-bs-toggle="dropdown"
-            style="border-radius: 8px; border: 1px solid #0d6efd;">
-        <i class="fas fa-cogs me-2"></i>
-        <span>Gestion</span>
-    </button>
-    <ul class="dropdown-menu dropdown-menu-end shadow"
-        style="min-width: 220px; border-radius: 10px;">
-        <li>
-            <a class="dropdown-item d-flex align-items-center py-2"
-               href="{{ url_for('gestion_etudiants') }}">
-                <i class="fas fa-users-cog text-primary me-3"></i>
-                            <div>
-                                <span class="d-block">Gestion des étudiants</span>
-                            </div>
-                        </a>
-                    </li>
-                    <li><hr class="dropdown-divider my-2"></li>
-                    <li>
-                        <a class="dropdown-item d-flex align-items-center py-2"
-                           href="{{ url_for('gestion_matieres') }}">
-                            <i class="fas fa-book-open text-success me-3"></i>
-                            <div>
-                                <span class="d-block">Gestion des matières</span>
-                            </div>
-                        </a>
-                    </li>
-                </ul>
-            </div>
+                    <div class="d-flex align-items-center gap-3">
+                    <a href="{{ url_for('gestion_etudiants') }}" class="btn btn-primary btn-sm d-flex align-items-center shadow"
+                       style="border-radius: 8px; border: 1px solid #0d6efd;">
+                        <i class="fas fa-users-cog me-2"></i>
+                        <span>Gestion des étudiants</span>
+                    </a>
+                </div>
+
 
                 <!-- Existing Imprimer Dropdown -->
                 <div class="dropdown ms-2">
@@ -82,7 +56,7 @@
                     <ul class="dropdown-menu dropdown-menu-end shadow">
                         <li>
                             <a class="dropdown-item d-flex align-items-center" href="{{ url_for('parametres_admin') }}">
-                                <i class="fas fa-cog text-primary me-2"></i> Paramètres système
+                                <i class="fas fa-cog text-primary me-2"></i> Paramètres de Réclamation
                             </a>
                         </li>
                         <li>

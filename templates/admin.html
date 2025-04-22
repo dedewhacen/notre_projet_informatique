@@ -74,7 +74,6 @@
             <th>Niveau</th>
             <th>Date création</th>
             <th>Objet</th>
-            <th>Détails</th>
             <th>Statut</th>
             <th class="text-center">Actions</th>
           </tr>
@@ -89,7 +88,6 @@
           <td>{{ rec.niveau }}</td>
           <td >{{ rec.date_creation }}</td>
           <td>{{ rec.objet }}</td>
-          <td>{{ rec.details }}</td>
          <td>
   <span class="status-chip {{ rec.statut|lower|replace(' ', '-') }}">
     {{ rec.statut }}
@@ -232,7 +230,7 @@
                <!-- Matières par Niveau -->
                 <div class="card">
                     <div class="card-header bg-light">
-                        <span>Top 10 des Matières par Niveau</span>
+                        <span>Top 5 des Matières par Niveau</span>
                     </div>
                     <div class="card-body">
                         <ul class="nav nav-tabs" id="levelTabs" role="tablist">
